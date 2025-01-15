@@ -11,7 +11,6 @@ import numpy as np
 
 # Configuration
 CONVO_FOLDER = '/Users/travisf/Documents/projects/gpt-heatmap/chats'
-MAPS_DIR = '/Users/travisf/Documents/projects/gpt-heatmap/maps'
 LOCAL_TZ = 'US/Mountain'
 
 @dataclass
