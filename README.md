@@ -41,8 +41,22 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 
 - Python 3.11+
 - OpenAI API key
-- ChatGPT conversation export (JSON format)
+- ChatGPT conversation exports (JSON format)
 - Required Python packages (see requirements.txt)
+
+### Exporting ChatGPT Conversations
+
+1. Go to [chat.openai.com](https://chat.openai.com)
+2. Click on your profile picture in the bottom-left corner
+3. Select 'Settings'
+4. Click on 'Data controls'
+5. Under 'Export data', click 'Export'
+6. Wait for the export to be prepared (you'll receive an email)
+7. Download the export file (it will be a .zip)
+8. Extract the conversations.json file from the zip
+9. Copy the JSON file to your project's `chats` directory
+
+Note: The export will contain all your ChatGPT conversations. You can either analyze all of them or select specific conversations by copying only those you want to analyze into the `chats` directory.
 
 ## Installation
 
