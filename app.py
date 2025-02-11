@@ -123,13 +123,6 @@ class ConversationData:
                         return []
                     
                     print(f"\nAnalyzing {len(data)} conversations...")
-                    # Print structure of first conversation
-                    if data:
-                        print(f"\nFirst conversation structure:")
-                        first_conv = data[0]
-                        print(f"Type: {type(first_conv)}")
-                        if isinstance(first_conv, dict):
-                            print(f"Keys: {list(first_conv.keys())}")
                     
                     # Filter out invalid conversations
                     valid_convs = []
