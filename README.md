@@ -1,54 +1,110 @@
-# GPT Heatmap & Analysis
+# GPT Heatmap & Conversation Analysis
 
-Generate GitHub-style heatmaps for your ChatGPT conversations and perform in-depth conversation analysis. This tool helps you visualize your ChatGPT usage patterns and understand the quality of your AI interactions through the lens of the 5-part AI Decision Loop framework.
-
-Inspired by [Chip Huyen's AIE Book](https://github.com/chiphuyen/aie-book)
+An advanced tool for analyzing ChatGPT conversations using the 5-step AI Decision Loop framework and collaborative work patterns. This tool helps you understand and improve your AI interactions by evaluating both the decision-making process and the effectiveness of human-AI collaboration.
 
 ## Features
 
-- **Conversation Heatmaps**: Generate GitHub-style heatmaps showing your ChatGPT usage patterns by year
-- **Conversation Analysis**: Analyze your chat conversations using GPT-4 to evaluate how well they follow the 5-part AI Decision Loop framework
-- **Markdown Export**: Export your conversations to markdown format for easy reading and sharing
+### Conversation Analysis
+- **5-Step AI Decision Loop Evaluation**:
+  1. Frame the Decision Context & Guide AI Prompting
+  2. Generate Multi-Perspective AI Outputs & Validate
+  3. Apply Human Judgment & Adjust AI Interaction
+  4. Test for Bias & Feasibility
+  5. Refine, Iterate, and Automate
 
-## Setup
+### Collaborative Pattern Analysis
+- **Known Patterns**:
+  1. Iterative Refinement (Human ↔ AI refinement cycles)
+  2. Review and Adjustment (Quality checks and critiques)
+  3. Reasoning and Challenge (Thought process exploration)
+- **Pattern Discovery**: Identifies and documents new effective collaboration patterns
 
-1. Clone the repository
-2. Place your ChatGPT conversation JSON file in a `chats` directory within the project folder
-3. If you want to use the analysis feature, create a `.env` file with your OpenAI API key:
+### Analysis Output
+- Detailed markdown reports for each conversation including:
+  - Summary of the interaction
+  - Evaluation of decision loop steps
+  - Collaborative pattern analysis
+  - Specific examples and recommendations
+  - Novel pattern discoveries
+
+## Requirements
+
+- Python 3.8+
+- OpenAI API key
+- ChatGPT conversation export (JSON format)
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/gpt-heatmap.git
+   cd gpt-heatmap
    ```
-   OPENAI_API_KEY=your_api_key_here
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
    ```
+
+3. Set up your environment:
+   - Create a `.env` file in the project root
+   - Add your OpenAI API key:
+     ```env
+     OPENAI_API_KEY=your_api_key_here
+     ```
+
+4. Prepare your data:
+   - Create a `chats` directory in the project root
+   - Place your ChatGPT conversation JSON files in the `chats` directory
 
 ## Usage
 
-Run the script with different operations:
-
+### Basic Usage
 ```bash
-# Run both analysis and heatmaps (default)
+# Run analysis with default settings
 python ai-heatmap.py
 
-# Generate only the heatmaps
-python ai-heatmap.py --operation maps
-# or
-python ai-heatmap.py -o maps
-
-# Run only the conversation analysis
-python ai-heatmap.py --operation analysis
-# or
-python ai-heatmap.py -o analysis
+# Specify custom output directory
+python ai-heatmap.py -o custom_output_dir
 ```
 
-## Output
+### Configuration
 
-- **Heatmaps**: Generated as interactive plots showing your ChatGPT usage patterns by year
-- **Analysis**: Saved in the `analysis` directory as markdown files
-  - Each conversation gets its own analysis file (`analysis_[chat_id].md`)
-  - Analysis includes evaluation of:
-    - Decision context and prompt quality
-    - Multi-perspective generation and validation
-    - Human judgment integration
-    - Bias and feasibility testing
-    - Iteration and automation opportunities
+You can customize the analysis by modifying `config.py`:
+- `CONVO_FOLDER`: Location of conversation files
+- `RESEARCH_FOLDER`: Default output directory
+- `DEFAULT_MODEL`: GPT model to use (default: 'gpt-4')
+- `DEFAULT_TEMPERATURE`: Model temperature (default: 0.62)
+- `MAX_WORKERS`: Number of parallel analysis threads
+
+## Output Structure
+
+```
+output_directory/
+├── conversation_id1.md
+├── conversation_id2.md
+└── ...
+```
+
+Each markdown file contains:
+1. Conversation Summary
+2. Decision Loop Analysis
+3. Collaboration Pattern Analysis
+4. Improvement Recommendations
+5. Novel Pattern Discoveries
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Inspired by [Chip Huyen's AIE Book](https://github.com/chiphuyen/aie-book)
+- Uses OpenAI's GPT models for analysis
 
 ## Requirements
 

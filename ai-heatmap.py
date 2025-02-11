@@ -1,52 +1,99 @@
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone, timedelta
-from collections import Counter
-from dataclasses import dataclass
-from typing import List, Dict, Optional, Union, Any
+"""AI-powered chat conversation analyzer.
+
+This module analyzes chat conversations using OpenAI's GPT models to evaluate:
+1. Decision-making processes using a 5-step AI Decision Loop
+2. Collaborative work patterns between humans and AI
+3. Novel interaction patterns that emerge from the conversations
+"""
+
+# Standard library imports
 import json
-import pytz
 import os
 import re
-from multiprocessing import cpu_count
-from tqdm import tqdm
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from datetime import datetime, timezone, timedelta
+from typing import List, Dict, Optional, Union, Any
+
+# Third-party imports
+import pytz
 from openai import OpenAI
 from dotenv import load_dotenv
-import matplotlib.dates as mdates
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import numpy as np
+from tqdm import tqdm
 
-# Configuration
-CONVO_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chats')
-LOCAL_TZ = 'US/Mountain'
+# Local imports
+from config import (
+    CONVO_FOLDER,
+    LOCAL_TZ,
+    RESEARCH_FOLDER,
+    DEFAULT_MODEL,
+    DEFAULT_TEMPERATURE,
+    MAX_WORKERS
+)
 
 @dataclass
 class Config:
+    """Configuration for the conversation analysis.
+    
+    Attributes:
+        convo_folder: Directory containing conversation files
+        local_tz: Local timezone for timestamp processing
+        research_folder: Output directory for analysis files
+        openai_api_key: API key for OpenAI services
+        model: GPT model to use for analysis
+        temperature: Temperature setting for GPT responses
+    """
     convo_folder: str = CONVO_FOLDER
     local_tz: str = LOCAL_TZ
-    research_folder: str = 'analysis'
-    openai_api_key: str = None
-    model: str = 'gpt-4o'
-    temperature: float = 0.62
+    research_folder: str = RESEARCH_FOLDER
+    openai_api_key: Optional[str] = None
+    model: str = DEFAULT_MODEL
+    temperature: float = DEFAULT_TEMPERATURE
 
-    def __post_init__(self):
-        # Load environment variables
+    def __post_init__(self) -> None:
+        """Initialize configuration with environment variables."""
         load_dotenv()
         if self.openai_api_key is None:
             self.openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not self.openai_api_key:
+                raise ValueError("OpenAI API key is required. Set it in your .env file or pass it to Config.")
 
 class ConversationData:
-    def __init__(self, config: Config):
+    """Handles loading, processing, and analyzing chat conversations.
+    
+    This class manages the entire workflow of:
+    1. Loading conversations from JSON files
+    2. Processing timestamps and other metadata
+    3. Analyzing conversations using OpenAI's GPT models
+    4. Saving analysis results to markdown files
+    """
+    
+    def __init__(self, config: Config) -> None:
+        """Initialize the conversation data processor.
+        
+        Args:
+            config: Configuration settings for processing
+            
+        Raises:
+            ValueError: If OpenAI API key is missing
+            FileNotFoundError: If conversation directory doesn't exist
+        """
         self.config = config
+        
+        # Validate conversation directory
+        if not os.path.exists(config.convo_folder):
+            raise FileNotFoundError(f"Conversation directory not found: {config.convo_folder}")
+        
+        # Initialize OpenAI client
+        try:
+            self.openai_client = OpenAI(api_key=config.openai_api_key)
+        except Exception as e:
+            raise ValueError(f"Failed to initialize OpenAI client: {str(e)}")
+        
+        # Load and process conversations
         self.conversations = self._load_conversations()
         self.convo_times = self._process_timestamps()
-        
-        # Validate OpenAI API key
-        if not self.config.openai_api_key:
-            raise ValueError("OpenAI API key is required for analysis. Please set it in your .env file.")
-        
-        # Create OpenAI client with base configuration
-        self.openai_client = OpenAI(api_key=self.config.openai_api_key)
         
     def _load_conversations(self) -> List[Dict]:
         """Load conversations from JSON files with validation and error handling."""
@@ -113,11 +160,30 @@ class ConversationData:
 
         return conversations
     
-    def analyze_and_save_chat(self, conv: Dict, research_folder: str) -> str:
-        """Analyze a chat with OpenAI and save just the analysis to markdown."""
+    def analyze_and_save_chat(self, conv: Dict, research_folder: str) -> tuple[str, bool]:
+        """Analyze a chat with OpenAI and save just the analysis to markdown.
+        
+        Args:
+            conv: Dictionary containing the conversation data
+            research_folder: Directory to save analysis results
+            
+        Returns:
+            tuple[str, bool]: (Path to the output file, Whether file was processed or skipped)
+            
+        Note:
+            If the output file already exists, the analysis will be skipped
+            to support resuming interrupted analysis runs.
+        """
         chat_id = conv.get('id', '')
         filename = f"{chat_id}.md"
         filepath = os.path.join(research_folder, filename)
+        
+        # Skip if file already exists (for resume support)
+        if os.path.exists(filepath):
+            return filepath, False
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(research_folder, exist_ok=True)
         
         # Extract messages from mapping
         mapping = conv.get('mapping', {})
@@ -151,77 +217,86 @@ class ConversationData:
             response = self.openai_client.chat.completions.create(
                 model=self.config.model,
                 messages=[
-                    {"role": "system", "content": """You are an expert conversation analyst focused on evaluating AI interactions against two frameworks while also discovering new patterns:
+                    {"role": "system", "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems. Analyze the USER's behavior in the following conversation:
 
-I. The 5-step AI Decision Loop:
-1. Frame the Decision Context & Guide AI Prompting
-   - Problem/goal definition and constraints
-   - Clear AI role and context specification
-   - Structured prompting with reasoning requests
+I. User's Decision-Making Process:
+1. Problem Framing & Initial Prompting
+   - How clearly did the USER define their needs?
+   - Did they provide necessary context?
+   - How structured were their requests?
 
-2. Generate Multi-Perspective AI Outputs & Validate
-   - Multiple perspectives/alternatives requested
-   - Validation for accuracy and coherence
-   - Self-critiquing and external reference checks
+2. Response Evaluation & Validation
+   - Did the USER verify or question outputs?
+   - Did they ask for alternatives?
+   - How did they validate quality?
 
-3. Apply Human Judgment & Adjust AI Interaction
-   - Human expertise integration
-   - Real-world constraint application
-   - Iterative refinement of AI outputs
+3. Expertise Application
+   - How did the USER apply their knowledge?
+   - Did they provide domain constraints?
+   - How did they guide refinements?
 
-4. Test for Bias & Feasibility
-   - What-if scenarios and outcome simulation
-   - Bias identification and mitigation
-   - Implementation feasibility assessment
+4. Critical Assessment
+   - Did the USER consider limitations?
+   - How did they handle potential issues?
+   - Did they test assumptions?
 
-5. Refine, Iterate, and Automate
-   - Feedback collection and metric tracking
-   - Process improvement and automation
-   - Documentation and knowledge base building
+5. Process Improvement
+   - Did the USER refine their approach?
+   - How did they handle iterations?
+   - Did they document learnings?
 
-II. Known Collaborative Work Patterns:
-1. Iterative Refinement Pattern
-   - Human proposes → AI refines
-   - AI drafts → Human iterates
-   - Human outlines → AI expands
+II. Collaborative Work Patterns (Both USER and Assistant):
+1. Iterative Refinement
+   - USER proposes → Assistant refines
+   - Assistant drafts → USER iterates
+   - USER outlines → Assistant expands
 
-2. Review and Adjustment Pattern
-   - AI self-critiques when asked
-   - Human requests refinements
-   - Mutual quality checks
+2. Review and Adjustment
+   - USER requests improvements
+   - Quality check exchanges
+   - Refinement cycles
 
-3. Reasoning and Challenge Pattern
-   - AI provides alternatives/counterarguments
-   - Explicit thought process sharing
-   - 'Why' questions for clarity
+3. Reasoning and Challenge
+   - USER asks 'why' questions
+   - Thought process sharing
+   - Alternative explorations
 
 For the given conversation, analyze and provide:
-1. Brief summary of the interaction
+1. Brief summary focusing on the USER's objectives and approach
 
-2. Analysis of the AI Decision Loop:
-   - Which steps were present and effective?
-   - What was missing or could be improved?
-   - Specific examples from the conversation
+2. Analysis of USER's Decision-Making:
+   - Strengths in their approach
+   - Areas for improvement
+   - Specific examples of effective/ineffective interactions
 
-3. Analysis of Collaborative Patterns:
-   - Which known patterns were demonstrated?
-   - How effective was the collaboration?
+3. Collaborative Pattern Analysis:
+   - Which patterns did the USER employ?
+   - How effectively did they guide the collaboration?
    - Examples of successful exchanges
-   - NEW PATTERNS DISCOVERED: Identify and describe any novel collaboration patterns
-     * What unique interaction patterns emerged?
-     * How did they enhance the collaboration?
-     * Could these patterns be formalized for future use?
+   - NEW PATTERNS: Identify any novel ways the USER worked with the AI
+     * What unique approaches did they take?
+     * How effective were these approaches?
+     * Could others benefit from these patterns?
 
-4. Recommendations for improvement:
-   - Decision loop enhancements
-   - Collaboration pattern suggestions (both known and new)
+4. Recommendations for the USER:
+   - How to frame requests better
+   - Ways to guide the interaction more effectively
    - Specific prompting strategies
 
-5. Notable insights about:
-   - Decision-making process
-   - Collaboration effectiveness
-   - Pattern evolution and innovation
-   - Learning opportunities"""},
+5. Key Insights about:
+   - USER's interaction style
+   - Effective techniques they employed
+   - Learning opportunities for better AI collaboration
+
+6. Decision Loop Model Evolution:
+   - NEW STEPS DISCOVERED: Did this conversation reveal any missing steps in our decision loop model?
+   - MISSING ELEMENTS: Were there important aspects of user decision-making that don't fit in any current step?
+   - MODEL IMPROVEMENTS: How could the decision loop model be enhanced based on this conversation?
+   Examples:
+   - A new step between existing steps
+   - A missing aspect within a step
+   - A different way to structure the steps
+   - Additional dimensions to consider"""},
                     {"role": "user", "content": conversation}
                 ],
                 temperature=self.config.temperature
@@ -255,29 +330,41 @@ For the given conversation, analyze and provide:
         # Create research folder if it doesn't exist
         os.makedirs(self.config.research_folder, exist_ok=True)
         
-        total_chats = len(self.conversations)
-        print(f"Starting to analyze {total_chats} chats...\n")
-
+        total_count = len(self.conversations)
+        processed_count = 0
+        skipped_count = 0
+        error_count = 0
+        
+        print(f"\nStarting analysis of {total_count} conversations...")
+        
         # Use ThreadPoolExecutor with progress bar
-        with ThreadPoolExecutor(max_workers=8) as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = []
             for conv in self.conversations:
                 future = executor.submit(self.analyze_and_save_chat, conv, self.config.research_folder)
                 futures.append(future)
             
-            # Show progress
-            with tqdm(total=len(futures), desc="Analyzing chats") as pbar:
-                results = []
-                for future in futures:
-                    result = future.result()
-                    results.append(result)
-                    pbar.update(1)
-
-        print(f"\nSuccessfully analyzed {len(results)} chats to {self.config.research_folder}/")
-        print("\nAnalysis files:")
-        for filepath in sorted(results):
-            print(f"- {os.path.basename(filepath)}")
-            
+            # Show progress bar while waiting for results
+            for future in tqdm(as_completed(futures), total=total_count, desc="Analyzing chats"):
+                try:
+                    filepath, was_processed = future.result()
+                    if was_processed:
+                        processed_count += 1
+                    else:
+                        skipped_count += 1
+                except Exception as e:
+                    error_count += 1
+                    print(f"\nError processing conversation: {str(e)}")
+        
+        # Print summary
+        print(f"\nAnalysis Summary")
+        print(f"---------------")
+        print(f"Total conversations: {total_count}")
+        print(f"Newly processed:    {processed_count}")
+        print(f"Already analyzed:   {skipped_count}")
+        if error_count > 0:
+            print(f"Errors:            {error_count}")
+    
     def _process_timestamps(self) -> List[datetime]:
         """Process conversation timestamps into datetime objects."""
         return [
@@ -288,24 +375,62 @@ For the given conversation, analyze and provide:
         
 
 
-def parse_args():
+def parse_args() -> Any:
+    """Parse command line arguments.
+    
+    Returns:
+        argparse.Namespace: Parsed command line arguments
+    """
     import argparse
-    parser = argparse.ArgumentParser(description='Process and analyze chat conversations')
-    parser.add_argument('-o', '--output', type=str, default='analysis',
-                      help='Output directory for analysis files')
+    parser = argparse.ArgumentParser(
+        description='Analyze chat conversations using AI to evaluate decision-making and collaboration patterns'
+    )
+    parser.add_argument(
+        '-o', '--output',
+        type=str,
+        default='analysis',
+        help='Output directory for analysis files'
+    )
     return parser.parse_args()
 
-def main():
-    args = parse_args()
+def main() -> None:
+    """Main entry point for the chat analysis tool.
     
-    # Create config with output directory
-    config = Config(research_folder=args.output)
-    
-    # Initialize conversation data
-    data = ConversationData(config)
-    
-    # Analyze all chats and save analysis
-    data.analyze_all_chats_parallel()
+    This function:
+    1. Parses command line arguments
+    2. Sets up configuration
+    3. Initializes the conversation processor
+    4. Runs the analysis in parallel
+    5. Handles any errors that occur
+    """
+    try:
+        args = parse_args()
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(args.output, exist_ok=True)
+        
+        # Initialize configuration
+        config = Config(research_folder=args.output)
+        
+        # Process conversations
+        print(f"\nInitializing chat analysis...")
+        data = ConversationData(config)
+        
+        # Run analysis
+        print(f"\nStarting parallel analysis...")
+        data.analyze_all_chats_parallel()
+        
+        print(f"\nAnalysis complete! Results saved to: {args.output}")
+        
+    except ValueError as e:
+        print(f"\nConfiguration Error: {str(e)}")
+        exit(1)
+    except FileNotFoundError as e:
+        print(f"\nFile Error: {str(e)}")
+        exit(1)
+    except Exception as e:
+        print(f"\nUnexpected Error: {str(e)}")
+        exit(1)
 
 if __name__ == '__main__':
     main()
