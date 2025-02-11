@@ -1,6 +1,15 @@
-# GPT Heatmap & Conversation Analysis
+# GPT Conversation Analysis
 
-A tool for analyzing ChatGPT conversations and generating heatmaps to visualize interaction patterns. This tool helps you understand your AI usage patterns and evaluate the effectiveness of your conversations.
+A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenAI` and generating heatmaps to visualize interaction patterns. This tool helps you understand your AI usage patterns and evaluate the effectiveness of your conversations.
+
+## AI Decision Loop
+🚀The 5 Steps (Each with Adaptive Loops)
+Frame the Decision Context & Guide AI Prompting
+Generate Multi-Perspective AI Outputs & Validate Responses
+Apply Human Judgment & Adjust AI Interaction
+Test for Bias & Feasibility
+Refine, Iterate, and Automate Where Possible
+Adaptive Loops: At any step, return to prior steps as needed to fine-tune prompts, recheck assumptions, or mitigate new biases.
 
 ## Features
 
