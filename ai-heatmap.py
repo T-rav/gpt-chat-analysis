@@ -189,7 +189,7 @@ class ConversationData:
         mapping = conv.get('mapping', {})
         if not mapping:
             print(f"Warning: No mapping found in chat {chat_id}")
-            return filepath
+            return filepath, False  # Return tuple for consistency
             
         # Convert mapping to ordered list of messages
         messages = []
@@ -203,7 +203,7 @@ class ConversationData:
         
         if not messages:
             print(f"Warning: No messages found in chat {chat_id}")
-            return filepath
+            return filepath, False  # Return tuple for consistency
         
         # Prepare conversation for analysis
         conversation = ""
