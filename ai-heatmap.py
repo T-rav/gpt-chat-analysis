@@ -312,8 +312,9 @@ For the given conversation, analyze and provide:
             print(f"\nError analyzing chat {chat_id}: {str(e)}")
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(f"Error: {str(e)}")
+            return filepath, True  # Still processed, even though there was an error
         
-        return filepath
+        return filepath, True  # Successfully processed
 
     def analyze_single_chat(self, chat_id: str) -> None:
         """Analyze a specific chat and save the analysis as a markdown file."""
