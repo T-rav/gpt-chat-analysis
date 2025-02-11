@@ -1,37 +1,33 @@
 # GPT Heatmap & Conversation Analysis
 
-An advanced tool for analyzing ChatGPT conversations using the 5-step AI Decision Loop framework and collaborative work patterns. This tool helps you understand and improve your AI interactions by evaluating both the decision-making process and the effectiveness of human-AI collaboration.
+A tool for analyzing ChatGPT conversations and generating heatmaps to visualize interaction patterns. This tool helps you understand your AI usage patterns and evaluate the effectiveness of your conversations.
 
 ## Features
 
 ### Conversation Analysis
-- **5-Step AI Decision Loop Evaluation**:
-  1. Frame the Decision Context & Guide AI Prompting
-  2. Generate Multi-Perspective AI Outputs & Validate
-  3. Apply Human Judgment & Adjust AI Interaction
-  4. Test for Bias & Feasibility
-  5. Refine, Iterate, and Automate
+- Analyzes chat conversations using OpenAI's GPT-4
+- Evaluates decision-making processes and interaction patterns
+- Generates detailed markdown reports for each conversation
 
-### Collaborative Pattern Analysis
-- **Known Patterns**:
-  1. Iterative Refinement (Human ↔ AI refinement cycles)
-  2. Review and Adjustment (Quality checks and critiques)
-  3. Reasoning and Challenge (Thought process exploration)
-- **Pattern Discovery**: Identifies and documents new effective collaboration patterns
+### Heatmap Generation
+- Creates visual heatmaps showing:
+  - Conversation frequency by day and hour
+  - Usage patterns over time
+  - Interaction hotspots
 
 ### Analysis Output
-- Detailed markdown reports for each conversation including:
-  - Summary of the interaction
-  - Evaluation of decision loop steps
-  - Collaborative pattern analysis
-  - Specific examples and recommendations
-  - Novel pattern discoveries
+- Markdown reports for each conversation including:
+  - Interaction analysis
+  - Decision-making evaluation
+  - Pattern identification
+  - Recommendations for improvement
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.11+
 - OpenAI API key
 - ChatGPT conversation export (JSON format)
+- Required Python packages (see requirements.txt)
 
 ## Installation
 
@@ -61,11 +57,14 @@ An advanced tool for analyzing ChatGPT conversations using the 5-step AI Decisio
 
 ### Basic Usage
 ```bash
-# Run analysis with default settings
-python ai-heatmap.py
+# Run chat analysis
+python app.py
 
-# Specify custom output directory
-python ai-heatmap.py -o custom_output_dir
+# Run chat analysis with custom output directory
+python app.py -o custom_output_dir
+
+# Generate heatmap visualizations
+python app.py --heatmap
 ```
 
 ### Configuration
