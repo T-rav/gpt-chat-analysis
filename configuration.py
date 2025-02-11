@@ -17,6 +17,9 @@ class Config:
         model: GPT model to use for analysis (default: 'gpt-4')
         temperature: Temperature setting for GPT responses (default: 0.2)
         max_workers: Maximum number of parallel workers (default: min(8, CPU_COUNT))
+        pdf_chunks: Number of PDF files to split analysis into (default: None)
+        pdf_output_dir: Directory for PDF output files (default: 'pdf_analysis')
+        pdf_size_limit_mb: Maximum size in MB for each PDF file (default: 50)
     """
     # Paths (with defaults)
     convo_folder: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chats')
@@ -32,6 +35,11 @@ class Config:
     
     # Processing settings
     max_workers: int = min(8, os.cpu_count() or 4)  # Limit to 8 or CPU count, whichever is smaller
+    
+    # PDF settings
+    pdf_chunks: Optional[int] = None
+    pdf_output_dir: str = 'analysis/pdf'
+    pdf_size_limit_mb: float = 50.0  # 50MB default size limit
 
     def __post_init__(self) -> None:
         """Initialize configuration with environment variables."""
@@ -44,3 +52,5 @@ class Config:
         # Ensure paths exist
         os.makedirs(self.convo_folder, exist_ok=True)
         os.makedirs(self.research_folder, exist_ok=True)
+        if self.pdf_chunks:
+            os.makedirs(self.pdf_output_dir, exist_ok=True)

@@ -89,16 +89,40 @@ Note: The export will contain all your ChatGPT conversations. You can either ana
 # Run chat analysis
 python app.py
 
-# Run chat analysis with custom output directory
+# Run analysis with custom output directory
 python app.py -o custom_output_dir
 
 # Generate heatmap visualizations
 python app.py --heatmap
+
+# Generate PDFs from analysis (3 files)
+python app.py --pdf 3
+
+# Generate PDFs with custom size limit (10MB per file)
+python app.py --pdf 3 --pdf-size-limit 10
 ```
+
+### PDF Generation
+
+The tool can merge analysis markdown files into PDF documents for easier sharing and reading:
+
+- `--pdf N`: Generate approximately N PDF files (may create more to respect size limits)
+- `--pdf-dir DIR`: Save PDFs to specified directory (default: pdf_analysis)
+- `--pdf-size-limit MB`: Maximum size per PDF in megabytes (default: 10MB)
+
+The PDF generation process:
+1. Converts each markdown file to PDF
+2. Sorts PDFs by size (largest first)
+3. Merges PDFs while respecting size limits
+4. Reports size of each generated file
+
+Requirements:
+- Node.js and npm (for mdpdf)
+- Install mdpdf globally: `npm install -g mdpdf`
 
 ### Configuration
 
-You can customize the analysis by modifying `config.py`:
+You can customize the analysis by modifying the `Config` class in `configuration.py`:
 - `CONVO_FOLDER`: Location of conversation files
 - `RESEARCH_FOLDER`: Default output directory
 - `DEFAULT_MODEL`: GPT model to use (default: 'gpt-4')
