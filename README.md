@@ -4,12 +4,12 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 
 ## AI Decision Loop
 🚀The 5 Steps (Each with Adaptive Loops)
-Frame the Decision Context & Guide AI Prompting
-Generate Multi-Perspective AI Outputs & Validate Responses
-Apply Human Judgment & Adjust AI Interaction
-Test for Bias & Feasibility
-Refine, Iterate, and Automate Where Possible
-Adaptive Loops: At any step, return to prior steps as needed to fine-tune prompts, recheck assumptions, or mitigate new biases.
+ 1. Frame the Decision Context & Guide AI Prompting
+ 2. Generate Multi-Perspective AI Outputs & Validate Responses
+ 3. Apply Human Judgment & Adjust AI Interaction
+ 4. Test for Bias & Feasibility
+ 5. Refine, Iterate, and Automate Where Possible
+ * Adaptive Loops: At any step, return to prior steps as needed to fine-tune prompts, recheck assumptions, or mitigate new biases.
 
 ## Features
 
