@@ -217,121 +217,61 @@ class ConversationData:
             response = self.openai_client.chat.completions.create(
                 model=self.config.model,
                 messages=[
-                    {"role": "system", "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems. Analyze the USER's behavior in the following conversation:
+                    {"role": "system", "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems. Analyze the USER's behavior in the following conversation. YOU MUST USE THE EXACT SECTION HEADINGS AND FORMAT PROVIDED BELOW:
 
-I. Analysis of USER's Decision-Making (5-Step Loop):
-1. Problem Framing & Initial Prompting
-   - Effectiveness: How well did the USER define and communicate their needs?
-   - Evidence: Specific examples of clear/unclear problem framing
-   - Impact: How this affected the conversation flow
+# 1. Brief Summary
+[Provide a concise overview of the USER's objectives and approach]
 
-2. Response Evaluation & Validation
-   - Effectiveness: How thoroughly did the USER evaluate AI responses?
-   - Evidence: Examples of verification, questioning, or acceptance
-   - Impact: How this shaped solution quality
+# 2. Five-Step Decision Loop Analysis
 
-3. Expertise Application
-   - Effectiveness: How well did the USER leverage their domain knowledge?
-   - Evidence: Examples of constraints or guidance provided
-   - Impact: How this improved solution relevance
+## Step 1: Problem Framing & Initial Prompting
+- Effectiveness: [How well did the USER define and communicate their needs?]
+- Evidence: [Specific examples of clear/unclear problem framing]
+- Impact: [How this affected the conversation flow]
 
-4. Critical Assessment
-   - Effectiveness: How well did the USER assess limitations and risks?
-   - Evidence: Examples of testing assumptions or identifying issues
-   - Impact: How this prevented potential problems
+## Step 2: Response Evaluation & Validation
+- Effectiveness: [How thoroughly did the USER evaluate AI responses?]
+- Evidence: [Examples of verification, questioning, or acceptance]
+- Impact: [How this shaped solution quality]
 
-5. Process Improvement
-   - Effectiveness: How did the USER refine and improve their approach?
-   - Evidence: Examples of learning and adaptation
-   - Impact: How this led to better outcomes
+## Step 3: Expertise Application
+- Effectiveness: [How well did the USER leverage their domain knowledge?]
+- Evidence: [Examples of constraints or guidance provided]
+- Impact: [How this improved solution relevance]
 
-Strengths and Areas for Improvement:
-- Which steps were executed most effectively?
-- Where could the process be enhanced?
-- What patterns emerged across steps?
+## Step 4: Critical Assessment
+- Effectiveness: [How well did the USER assess limitations and risks?]
+- Evidence: [Examples of testing assumptions or identifying issues]
+- Impact: [How this prevented potential problems]
 
-II. Collaborative Work Patterns (Both USER and Assistant):
-1. Iterative Refinement
-   - USER proposes → Assistant refines
-   - Assistant drafts → USER iterates
-   - USER outlines → Assistant expands
+## Step 5: Process Improvement
+- Effectiveness: [How did the USER refine and improve their approach?]
+- Evidence: [Examples of learning and adaptation]
+- Impact: [How this led to better outcomes]
 
-2. Review and Adjustment
-   - USER requests improvements
-   - Quality check exchanges
-   - Refinement cycles
+## Overall Decision Loop Assessment
+- Strongest Steps: [List the most effective steps]
+- Areas for Enhancement: [Identify steps needing improvement]
+- Emerging Patterns: [Note patterns across steps]
 
-3. Reasoning and Challenge
-   - USER asks 'why' questions
-   - Thought process sharing
-   - Alternative explorations
+# 3. Collaborative Pattern Analysis
 
-For the given conversation, analyze and provide:
-1. Brief summary focusing on the USER's objectives and approach
+## Observed Patterns
+- [List and analyze patterns the USER employed]
+- [Evaluate effectiveness of collaboration]
+- [Provide specific examples]
 
-2. Analysis of USER's Decision-Making:
-   - Strengths in their approach
-   - Areas for improvement
-   - Specific examples of effective/ineffective interactions
+## Novel Patterns
+- [Identify any unique approaches]
+- [Assess their effectiveness]
+- [Discuss potential benefits for others]
 
-3. Collaborative Pattern Analysis:
-   - Which patterns did the USER employ?
-   - How effectively did they guide the collaboration?
-   - Examples of successful exchanges
-   - NEW PATTERNS: Identify any novel ways the USER worked with the AI
-     * What unique approaches did they take?
-     * How effective were these approaches?
-     * Could others benefit from these patterns?
+# 4. Recommendations
+- [Specific suggestions for improvement]
+- [Actionable steps for better AI collaboration]
+- [Strategic adjustments to enhance outcomes]
 
-III. Iterative Refinement Through Dialogue:
-1. Initial Context and Evolution
-   - Did the USER start with a broad/minimal context?
-   - How did the conversation naturally evolve?
-   - Was there a fluid dialogue to discover requirements?
-
-2. Refinement Patterns
-   - Natural vs structured refinement
-   - Use of follow-up questions
-   - Implicit vs explicit guidance
-
-3. Effectiveness Analysis
-   - Speed of reaching desired outcome
-   - Quality of final result
-   - Balance of exploration vs direct guidance
-
-4. Recommendations for the USER:
-   - How to frame requests better
-   - Ways to guide the interaction more effectively
-   - Specific prompting strategies
-
-5. Key Insights about:
-   - USER's interaction style
-   - Effective techniques they employed
-   - Learning opportunities for better AI collaboration
-
-6. Decision Loop Model Evolution:
-   Consider how this interaction might reveal ways to enhance our 5-step model:
-
-   A. Model Completeness
-      - Are there fundamental decision-making patterns not captured by the current steps?
-      - What cognitive processes or decision points occur between or across steps?
-      - Are there meta-level considerations that span multiple steps?
-
-   B. Step Interactions
-      - How do steps influence and feed into each other?
-      - Are there important feedback loops between non-adjacent steps?
-      - What parallel processes might occur across steps?
-
-   C. Model Adaptability
-      - How might the model flex for different thinking styles?
-      - What universal principles emerge across different approaches?
-      - How can the model better represent iterative improvement?
-
-7. Dialogue-Driven Development:
-   - How effectively did the USER use natural dialogue for requirement discovery?
-   - Did this approach lead to better outcomes than structured requests?
-   - What can we learn from this style of interaction?
-   - How does it complement or challenge the decision loop model?"""},
+You must maintain this exact structure and these exact headings in your response. Replace the text in brackets with your analysis while keeping the heading hierarchy and formatting consistent."""},
                     {"role": "user", "content": conversation}
                 ],
                 temperature=self.config.temperature
