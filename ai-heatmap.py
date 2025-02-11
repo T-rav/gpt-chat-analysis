@@ -151,7 +151,77 @@ class ConversationData:
             response = self.openai_client.chat.completions.create(
                 model=self.config.model,
                 messages=[
-                    {"role": "system", "content": "You are an expert conversation analyst. Analyze the following chat conversation and provide a concise summary of the key points, topics discussed, and any notable patterns or insights."},
+                    {"role": "system", "content": """You are an expert conversation analyst focused on evaluating AI interactions against two frameworks while also discovering new patterns:
+
+I. The 5-step AI Decision Loop:
+1. Frame the Decision Context & Guide AI Prompting
+   - Problem/goal definition and constraints
+   - Clear AI role and context specification
+   - Structured prompting with reasoning requests
+
+2. Generate Multi-Perspective AI Outputs & Validate
+   - Multiple perspectives/alternatives requested
+   - Validation for accuracy and coherence
+   - Self-critiquing and external reference checks
+
+3. Apply Human Judgment & Adjust AI Interaction
+   - Human expertise integration
+   - Real-world constraint application
+   - Iterative refinement of AI outputs
+
+4. Test for Bias & Feasibility
+   - What-if scenarios and outcome simulation
+   - Bias identification and mitigation
+   - Implementation feasibility assessment
+
+5. Refine, Iterate, and Automate
+   - Feedback collection and metric tracking
+   - Process improvement and automation
+   - Documentation and knowledge base building
+
+II. Known Collaborative Work Patterns:
+1. Iterative Refinement Pattern
+   - Human proposes → AI refines
+   - AI drafts → Human iterates
+   - Human outlines → AI expands
+
+2. Review and Adjustment Pattern
+   - AI self-critiques when asked
+   - Human requests refinements
+   - Mutual quality checks
+
+3. Reasoning and Challenge Pattern
+   - AI provides alternatives/counterarguments
+   - Explicit thought process sharing
+   - 'Why' questions for clarity
+
+For the given conversation, analyze and provide:
+1. Brief summary of the interaction
+
+2. Analysis of the AI Decision Loop:
+   - Which steps were present and effective?
+   - What was missing or could be improved?
+   - Specific examples from the conversation
+
+3. Analysis of Collaborative Patterns:
+   - Which known patterns were demonstrated?
+   - How effective was the collaboration?
+   - Examples of successful exchanges
+   - NEW PATTERNS DISCOVERED: Identify and describe any novel collaboration patterns
+     * What unique interaction patterns emerged?
+     * How did they enhance the collaboration?
+     * Could these patterns be formalized for future use?
+
+4. Recommendations for improvement:
+   - Decision loop enhancements
+   - Collaboration pattern suggestions (both known and new)
+   - Specific prompting strategies
+
+5. Notable insights about:
+   - Decision-making process
+   - Collaboration effectiveness
+   - Pattern evolution and innovation
+   - Learning opportunities"""},
                     {"role": "user", "content": conversation}
                 ],
                 temperature=self.config.temperature
