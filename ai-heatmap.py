@@ -46,11 +46,7 @@ class ConversationData:
             raise ValueError("OpenAI API key is required for analysis. Please set it in your .env file.")
         
         # Create OpenAI client with base configuration
-        self.openai_client = OpenAI(
-            api_key=self.config.openai_api_key,
-            base_url="https://api.openai.com/v1",
-            timeout=60.0
-        )
+        self.openai_client = OpenAI()
         
     def _load_conversations(self) -> List[Dict]:
         with open(f'{self.config.convo_folder}/conversations.json', 'r') as f:
