@@ -107,7 +107,6 @@ python app.py --pdf 3 --pdf-size-limit 10
 The tool can merge analysis markdown files into PDF documents for easier sharing and reading:
 
 - `--pdf N`: Generate approximately N PDF files (may create more to respect size limits)
-- `--pdf-dir DIR`: Save PDFs to specified directory (default: pdf_analysis)
 - `--pdf-size-limit MB`: Maximum size per PDF in megabytes (default: 10MB)
 
 The PDF generation process:
@@ -116,9 +115,12 @@ The PDF generation process:
 3. Merges PDFs while respecting size limits
 4. Reports size of each generated file
 
-Requirements:
-- Node.js and npm (for mdpdf)
-- Install mdpdf globally: `npm install -g mdpdf`
+The PDF generation uses WeasyPrint, which requires system dependencies. On macOS:
+```bash
+brew install python-tk cairo pango gdk-pixbuf libffi
+```
+
+For other operating systems, see [WeasyPrint's installation guide](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation).
 
 ### Configuration
 

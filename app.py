@@ -8,24 +8,23 @@ This module analyzes chat conversations using OpenAI's GPT models to evaluate:
 
 # Standard library imports
 import json
-import math
 import os
 import re
-import subprocess
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import List, Dict, Optional, Union, Any
+from typing import List, Dict, Optional, Union
 
 # Third-party imports
 import pytz
 from openai import OpenAI
-from PyPDF2 import PdfMerger
 from tqdm import tqdm
 
 # Local imports
+from cli import CLIParser
 from configuration import Config
+from pdf_generator import PDFGenerator
 
 class ConversationData:
     """Handles loading, processing, and analyzing chat conversations.
@@ -325,120 +324,7 @@ You must maintain this exact structure and these exact headings in your response
         
 
 
-def merge_markdown_to_pdfs(markdown_dir: str, output_dir: str, num_chunks: int, size_limit_mb: float = 10.0) -> None:
-    """Merge markdown files into PDFs, respecting size limits.
-    
-    Args:
-        markdown_dir: Directory containing markdown files
-        output_dir: Directory to save PDF files
-        num_chunks: Target number of PDF files to create
-        size_limit_mb: Maximum size in MB for each PDF file
-    """
-    # Get all markdown files
-    markdown_files = sorted(Path(markdown_dir).glob('*.md'))
-    total_files = len(markdown_files)
-    
-    if total_files == 0:
-        print("No markdown files found to convert to PDF")
-        return
-    
-    # Convert each markdown file to PDF first
-    temp_pdfs = []
-    for md_file in tqdm(markdown_files, desc='Converting markdown files to PDF'):
-        pdf_file = Path(output_dir) / f"{md_file.stem}_temp.pdf"
-        try:
-            # Use mdpdf to convert markdown to PDF
-            subprocess.run(['mdpdf', str(md_file), '-o', str(pdf_file)], check=True)
-            temp_pdfs.append(pdf_file)
-        except subprocess.CalledProcessError as e:
-            print(f"Error converting {md_file}: {e}")
-            continue
-    
-    if not temp_pdfs:
-        print("No PDFs were successfully created")
-        return
-    
-    # Get file sizes and sort by size (largest first)
-    pdf_sizes = [(pdf, pdf.stat().st_size / (1024 * 1024)) for pdf in temp_pdfs]  # Size in MB
-    pdf_sizes.sort(key=lambda x: x[1], reverse=True)
-    
-    # Initialize output files
-    output_pdfs = []
-    current_merger = PdfMerger()
-    current_size = 0
-    current_index = 1
-    
-    # Process PDFs, creating new files when size limit is reached
-    for pdf_file, size_mb in tqdm(pdf_sizes, desc='Merging PDFs'):
-        # If adding this file would exceed size limit, save current file and start new one
-        if current_size + size_mb > size_limit_mb and current_size > 0:
-            output_file = Path(output_dir) / f'analysis_part_{current_index}.pdf'
-            current_merger.write(str(output_file))
-            current_merger.close()
-            output_pdfs.append(output_file)
-            print(f"Created {output_file} ({current_size:.1f}MB)")
-            
-            # Start new file
-            current_merger = PdfMerger()
-            current_size = 0
-            current_index += 1
-        
-        # Add current PDF to merger
-        current_merger.append(str(pdf_file))
-        current_size += size_mb
-    
-    # Save final file if it has any content
-    if current_size > 0:
-        output_file = Path(output_dir) / f'analysis_part_{current_index}.pdf'
-        current_merger.write(str(output_file))
-        current_merger.close()
-        output_pdfs.append(output_file)
-        print(f"Created {output_file} ({current_size:.1f}MB)")
-    
-    # Clean up temporary PDFs
-    for pdf in temp_pdfs:
-        pdf.unlink()
-    
-    # Report results
-    print(f"\nCreated {len(output_pdfs)} PDF files with size limit of {size_limit_mb}MB")
-    for pdf in output_pdfs:
-        size_mb = pdf.stat().st_size / (1024 * 1024)
-        print(f"  {pdf.name}: {size_mb:.1f}MB")
 
-def parse_args() -> Any:
-    """Parse command line arguments.
-    
-    Returns:
-        argparse.Namespace: Parsed command line arguments
-    """
-    import argparse
-    parser = argparse.ArgumentParser(
-        description='Analyze chat conversations using AI to evaluate decision-making and collaboration patterns'
-    )
-    parser.add_argument(
-        '-o', '--output',
-        type=str,
-        default='analysis',
-        help='Output directory for analysis files'
-    )
-    parser.add_argument(
-        '--pdf',
-        type=int,
-        help='Merge analysis into specified number of PDF files'
-    )
-    parser.add_argument(
-        '--pdf-dir',
-        type=str,
-        default='pdf_analysis',
-        help='Output directory for PDF files'
-    )
-    parser.add_argument(
-        '--pdf-size-limit',
-        type=float,
-        default=50.0,
-        help='Maximum size in MB for each PDF file (default: 50MB)'
-    )
-    return parser.parse_args()
 
 def main() -> None:
     """Main entry point for the chat analysis tool.
@@ -452,12 +338,11 @@ def main() -> None:
     6. Handles any errors that occur
     """
     try:
-        args = parse_args()
+        # Parse arguments
+        args = CLIParser.parse_args()
         
         # Create output directory if it doesn't exist
         os.makedirs(args.output, exist_ok=True)
-        if args.pdf:
-            os.makedirs(args.pdf_dir, exist_ok=True)
         
         # Initialize configuration
         config = Config(
@@ -478,12 +363,12 @@ def main() -> None:
         # Generate PDFs if requested
         if args.pdf:
             print(f"\nMerging analysis into {args.pdf} PDF files...")
-            merge_markdown_to_pdfs(
+            pdf_gen = PDFGenerator(
                 markdown_dir=args.output,
                 output_dir=args.pdf_dir,
-                num_chunks=args.pdf,
                 size_limit_mb=config.pdf_size_limit_mb
             )
+            pdf_gen.generate_pdfs(args.pdf)
         
         print(f"\nAnalysis complete! Results saved to: {args.output}")
         if args.pdf:
