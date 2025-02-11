@@ -95,11 +95,26 @@ output_directory/
 ```
 
 Each markdown file contains:
-1. Conversation Summary
-2. Decision Loop Analysis
-3. Collaboration Pattern Analysis
-4. Improvement Recommendations
-5. Novel Pattern Discoveries
+
+1. Brief Summary
+   - Overview of objectives and approach
+
+2. Five-Step Decision Loop Analysis
+   - Problem Framing & Initial Prompting
+   - Response Evaluation & Validation
+   - Expertise Application
+   - Critical Assessment
+   - Process Improvement
+   - Overall Assessment
+
+3. Collaborative Pattern Analysis
+   - Observed Patterns
+   - Novel Patterns
+
+4. Recommendations
+   - Improvement suggestions
+   - Action steps
+   - Strategic adjustments
 
 ## Contributing
 
