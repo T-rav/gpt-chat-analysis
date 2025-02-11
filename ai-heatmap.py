@@ -49,8 +49,69 @@ class ConversationData:
         self.openai_client = OpenAI(api_key=self.config.openai_api_key)
         
     def _load_conversations(self) -> List[Dict]:
-        with open(f'{self.config.convo_folder}/conversations.json', 'r') as f:
-            return json.load(f)
+        """Load conversations from JSON files with validation and error handling."""
+        def validate_conversation(conv: Dict) -> bool:
+            """Validate that a conversation has the required fields."""
+            if not isinstance(conv, dict):
+                print(f"Invalid conversation type: {type(conv)}")
+                return False
+                
+            # Required fields for the conversation
+            required_fields = ['id', 'conversation_id']
+            missing_fields = [field for field in required_fields if field not in conv]
+            if missing_fields:
+                print(f"Missing required fields: {missing_fields}")
+                return False
+            
+            return True
+
+        def load_file(filepath: str) -> List[Dict]:
+            """Load and validate a JSON file."""
+            try:
+                print(f"Loading conversations from {filepath}")
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    if not isinstance(data, list):
+                        print(f"Error: Expected a list of conversations, got {type(data)}")
+                        return []
+                    
+                    print(f"\nAnalyzing {len(data)} conversations...")
+                    # Print structure of first conversation
+                    if data:
+                        print(f"\nFirst conversation structure:")
+                        first_conv = data[0]
+                        print(f"Type: {type(first_conv)}")
+                        if isinstance(first_conv, dict):
+                            print(f"Keys: {list(first_conv.keys())}")
+                    
+                    # Filter out invalid conversations
+                    valid_convs = []
+                    for conv in data:
+                        if validate_conversation(conv):
+                            # Add empty messages list if not present
+                            if 'messages' not in conv:
+                                conv['messages'] = []
+                            valid_convs.append(conv)
+                    
+                    print(f"\nLoaded {len(valid_convs)} valid conversations from {len(data)} total")
+                    return valid_convs
+            except json.JSONDecodeError as e:
+                print(f"Error decoding JSON from {filepath}: {str(e)}")
+                return []
+            except Exception as e:
+                print(f"Error loading {filepath}: {str(e)}")
+                return []
+
+        # Try loading conversations.json first
+        filepath = os.path.join(self.config.convo_folder, 'conversations.json')
+        conversations = load_file(filepath)
+        
+        # If no valid conversations found, try shared_conversations.json
+        if not conversations:
+            filepath = os.path.join(self.config.convo_folder, 'shared_conversations.json')
+            conversations = load_file(filepath)
+
+        return conversations
     
     def analyze_and_save_chat(self, conv: Dict, research_folder: str) -> str:
         """Analyze a chat with OpenAI and save just the analysis to markdown."""
@@ -58,8 +119,22 @@ class ConversationData:
         filename = f"{chat_id}.md"
         filepath = os.path.join(research_folder, filename)
         
-        # Extract messages
-        messages = conv.get('messages', [])
+        # Extract messages from mapping
+        mapping = conv.get('mapping', {})
+        if not mapping:
+            print(f"Warning: No mapping found in chat {chat_id}")
+            return filepath
+            
+        # Convert mapping to ordered list of messages
+        messages = []
+        current_node = conv.get('current_node')
+        while current_node and current_node in mapping:
+            node = mapping[current_node]
+            message = node.get('message', {})
+            if message:
+                messages.insert(0, message)  # Insert at beginning to maintain order
+            current_node = node.get('parent')  # Move to parent node
+        
         if not messages:
             print(f"Warning: No messages found in chat {chat_id}")
             return filepath
@@ -67,8 +142,8 @@ class ConversationData:
         # Prepare conversation for analysis
         conversation = ""
         for msg in messages:
-            role = msg.get('role', 'unknown')
-            content = msg.get('content', '')
+            role = msg.get('author', {}).get('role', 'unknown')
+            content = msg.get('content', {}).get('parts', [''])[0]
             conversation += f"{role}: {content}\n"
         
         # Analyze with OpenAI
