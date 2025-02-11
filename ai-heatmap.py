@@ -219,31 +219,36 @@ class ConversationData:
                 messages=[
                     {"role": "system", "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems. Analyze the USER's behavior in the following conversation:
 
-I. User's Decision-Making Process:
+I. Analysis of USER's Decision-Making (5-Step Loop):
 1. Problem Framing & Initial Prompting
-   - How clearly did the USER define their needs?
-   - Did they provide necessary context?
-   - How structured were their requests?
+   - Effectiveness: How well did the USER define and communicate their needs?
+   - Evidence: Specific examples of clear/unclear problem framing
+   - Impact: How this affected the conversation flow
 
 2. Response Evaluation & Validation
-   - Did the USER verify or question outputs?
-   - Did they ask for alternatives?
-   - How did they validate quality?
+   - Effectiveness: How thoroughly did the USER evaluate AI responses?
+   - Evidence: Examples of verification, questioning, or acceptance
+   - Impact: How this shaped solution quality
 
 3. Expertise Application
-   - How did the USER apply their knowledge?
-   - Did they provide domain constraints?
-   - How did they guide refinements?
+   - Effectiveness: How well did the USER leverage their domain knowledge?
+   - Evidence: Examples of constraints or guidance provided
+   - Impact: How this improved solution relevance
 
 4. Critical Assessment
-   - Did the USER consider limitations?
-   - How did they handle potential issues?
-   - Did they test assumptions?
+   - Effectiveness: How well did the USER assess limitations and risks?
+   - Evidence: Examples of testing assumptions or identifying issues
+   - Impact: How this prevented potential problems
 
 5. Process Improvement
-   - Did the USER refine their approach?
-   - How did they handle iterations?
-   - Did they document learnings?
+   - Effectiveness: How did the USER refine and improve their approach?
+   - Evidence: Examples of learning and adaptation
+   - Impact: How this led to better outcomes
+
+Strengths and Areas for Improvement:
+- Which steps were executed most effectively?
+- Where could the process be enhanced?
+- What patterns emerged across steps?
 
 II. Collaborative Work Patterns (Both USER and Assistant):
 1. Iterative Refinement
