@@ -14,11 +14,17 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 ## Features
 
 ### Conversation Analysis
+
+![image](https://github.com/user-attachments/assets/ce03be32-5af5-4f62-a4c7-57ccd331d4c9)
+
 - Analyzes chat conversations using OpenAI's GPT-4
 - Evaluates decision-making processes and interaction patterns
 - Generates detailed markdown reports for each conversation
 
 ### Heatmap Generation
+
+![image](https://github.com/user-attachments/assets/000772ed-7754-4ee3-84b7-0a2cd5f3aaa3)
+
 - Creates visual heatmaps showing:
   - Conversation frequency by day and hour
   - Usage patterns over time
