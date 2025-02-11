@@ -180,6 +180,7 @@ class ConversationData:
         
         # Skip if file already exists (for resume support)
         if os.path.exists(filepath):
+            print(f"Skipping: {filename} (already analyzed)")
             return filepath, False
         
         # Create output directory if it doesn't exist
@@ -350,6 +351,7 @@ For the given conversation, analyze and provide:
                     filepath, was_processed = future.result()
                     if was_processed:
                         processed_count += 1
+                        print(f"Processed: {os.path.basename(filepath)}")
                     else:
                         skipped_count += 1
                 except Exception as e:
