@@ -11,7 +11,7 @@ import json
 import os
 import re
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Union, Any
@@ -180,7 +180,6 @@ class ConversationData:
         
         # Skip if file already exists (for resume support)
         if os.path.exists(filepath):
-            print(f"Skipping: {filename} (already analyzed)")
             return filepath, False
         
         # Create output directory if it doesn't exist
@@ -346,17 +345,29 @@ For the given conversation, analyze and provide:
                 futures.append(future)
             
             # Show progress bar while waiting for results
-            for future in tqdm(as_completed(futures), total=total_count, desc="Analyzing chats"):
-                try:
-                    filepath, was_processed = future.result()
-                    if was_processed:
-                        processed_count += 1
-                        print(f"Processed: {os.path.basename(filepath)}")
-                    else:
-                        skipped_count += 1
-                except Exception as e:
-                    error_count += 1
-                    print(f"\nError processing conversation: {str(e)}")
+            futures_set = set(futures)  # Convert to set for O(1) lookup
+            with tqdm(total=total_count, desc="Analyzing") as pbar:
+                while futures_set:
+                    # Update progress for any completed futures
+                    done, _ = wait(futures_set, timeout=0.1)
+                    for future in done:
+                        try:
+                            filepath, was_processed = future.result()
+                            filename = os.path.basename(filepath)
+                            if was_processed:
+                                processed_count += 1
+                                status = "Processing"
+                            else:
+                                skipped_count += 1
+                                status = "Skipped"
+                            pbar.set_description(f"{status}: {filename} (New: {processed_count}, Skip: {skipped_count})")
+                            pbar.update(1)
+                            futures_set.remove(future)
+                        except Exception as e:
+                            error_count += 1
+                            pbar.write(f"Error processing conversation: {str(e)}")
+                            pbar.update(1)
+                            futures_set.remove(future)
         
         # Print summary
         print(f"\nAnalysis Summary")
