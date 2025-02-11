@@ -12,52 +12,16 @@ import os
 import re
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, wait
-from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Union, Any
 
 # Third-party imports
 import pytz
 from openai import OpenAI
-from dotenv import load_dotenv
 from tqdm import tqdm
 
 # Local imports
-from config import (
-    CONVO_FOLDER,
-    LOCAL_TZ,
-    RESEARCH_FOLDER,
-    DEFAULT_MODEL,
-    DEFAULT_TEMPERATURE,
-    MAX_WORKERS
-)
-
-@dataclass
-class Config:
-    """Configuration for the conversation analysis.
-    
-    Attributes:
-        convo_folder: Directory containing conversation files
-        local_tz: Local timezone for timestamp processing
-        research_folder: Output directory for analysis files
-        openai_api_key: API key for OpenAI services
-        model: GPT model to use for analysis
-        temperature: Temperature setting for GPT responses
-    """
-    convo_folder: str = CONVO_FOLDER
-    local_tz: str = LOCAL_TZ
-    research_folder: str = RESEARCH_FOLDER
-    openai_api_key: Optional[str] = None
-    model: str = DEFAULT_MODEL
-    temperature: float = DEFAULT_TEMPERATURE
-
-    def __post_init__(self) -> None:
-        """Initialize configuration with environment variables."""
-        load_dotenv()
-        if self.openai_api_key is None:
-            self.openai_api_key = os.getenv('OPENAI_API_KEY')
-            if not self.openai_api_key:
-                raise ValueError("OpenAI API key is required. Set it in your .env file or pass it to Config.")
+from configuration import Config
 
 class ConversationData:
     """Handles loading, processing, and analyzing chat conversations.
@@ -307,7 +271,7 @@ You must maintain this exact structure and these exact headings in your response
         print(f"\nStarting analysis of {total_count} conversations...")
         
         # Use ThreadPoolExecutor with progress bar
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             futures = []
             for conv in self.conversations:
                 future = executor.submit(self.analyze_and_save_chat, conv, self.config.research_folder)
