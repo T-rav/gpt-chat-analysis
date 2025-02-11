@@ -45,8 +45,12 @@ class ConversationData:
         if not self.config.openai_api_key:
             raise ValueError("OpenAI API key is required for analysis. Please set it in your .env file.")
         
-        # Create OpenAI client
-        self.openai_client = OpenAI(api_key=self.config.openai_api_key)
+        # Create OpenAI client with base configuration
+        self.openai_client = OpenAI(
+            api_key=self.config.openai_api_key,
+            base_url="https://api.openai.com/v1",
+            timeout=60.0
+        )
         
     def _load_conversations(self) -> List[Dict]:
         with open(f'{self.config.convo_folder}/conversations.json', 'r') as f:
@@ -63,6 +67,12 @@ class ConversationData:
         content = [f"# {title}\n"]
         content.append(f"Chat ID: {chat_id}\n")
         content.append(f"Created: {datetime.fromtimestamp(conv['create_time'], tz=timezone.utc)}\n")
+        
+        # Add AI Analysis if available
+        if hasattr(self, 'analysis_results') and chat_id in self.analysis_results:
+            content.append("## AI Analysis\n")
+            content.append(f"{self.analysis_results[chat_id]}\n")
+        
         content.append("## Conversation\n")
         
         # Add messages
@@ -115,6 +125,66 @@ class ConversationData:
         print("\nSaved files:")
         for filepath in sorted(results):
             print(f"- {os.path.basename(filepath)}")
+            
+    def _process_timestamps(self) -> List[datetime]:
+        """Process conversation timestamps into datetime objects."""
+        return [
+            datetime.fromtimestamp(conv['create_time'], tz=timezone.utc)
+            .astimezone(pytz.timezone(self.config.local_tz))
+            for conv in self.conversations
+        ]
+        
+    def analyze_multiple_chats(self, chat_ids: List[str] = None) -> Dict[str, str]:
+        """Analyze multiple chat conversations using OpenAI API and save results."""
+        if chat_ids is None:
+            # If no specific chat IDs provided, analyze all conversations
+            chat_ids = [conv['id'] for conv in self.conversations]
+        
+        print(f"\nAnalyzing {len(chat_ids)} chats...")
+        
+        self.analysis_results = {}
+        with tqdm(total=len(chat_ids), desc="Analyzing chats") as pbar:
+            for chat_id in chat_ids:
+                # Find the conversation
+                conv = next((c for c in self.conversations if c['id'] == chat_id), None)
+                if not conv:
+                    print(f"Warning: Chat {chat_id} not found")
+                    continue
+                
+                # Extract messages
+                messages = conv.get('messages', [])
+                if not messages:
+                    print(f"Warning: No messages found in chat {chat_id}")
+                    continue
+                
+                # Prepare conversation for analysis
+                conversation = ""
+                for msg in messages:
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    conversation += f"{role}: {content}\n"
+                
+                # Analyze with OpenAI
+                try:
+                    response = self.openai_client.chat.completions.create(
+                        model=self.config.model,
+                        messages=[
+                            {"role": "system", "content": "You are an expert conversation analyst. Analyze the following chat conversation and provide a concise summary of the key points, topics discussed, and any notable patterns or insights."},
+                            {"role": "user", "content": conversation}
+                        ],
+                        temperature=self.config.temperature
+                    )
+                    
+                    analysis = response.choices[0].message.content
+                    self.analysis_results[chat_id] = analysis
+                    
+                except Exception as e:
+                    print(f"\nError analyzing chat {chat_id}: {str(e)}")
+                    self.analysis_results[chat_id] = f"Error: {str(e)}"
+                
+                pbar.update(1)
+        
+        return self.analysis_results
 
 def parse_args():
     import argparse
@@ -132,7 +202,12 @@ def main():
     # Initialize conversation data
     data = ConversationData(config)
     
-    # Save all chats
+    # First analyze all chats
+    print("Starting chat analysis...")
+    analysis_results = data.analyze_multiple_chats()
+    
+    # Then save all chats with their analysis
+    print("\nSaving chats with analysis...")
     data.save_all_chats_parallel()
 
 if __name__ == '__main__':
