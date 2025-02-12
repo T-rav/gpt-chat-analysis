@@ -82,7 +82,7 @@ python app.py -o analysis
 8. Extract the conversations.json file from the zip
 9. Copy the JSON file to your project's `chats` directory
 
-Note: The export will contain all your ChatGPT conversations. You can either analyze all of them or select specific conversations by copying only those you want to analyze into the `chats` directory.
+Note: The export will contain all your ChatGPT conversations and related media. 
 
 ## Installation
 
