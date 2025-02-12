@@ -37,6 +37,14 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
   - Pattern identification
   - Recommendations for improvement
 
+### PDF Generation
+- Automatically converts markdown reports to PDFs
+- Manages file size by splitting into multiple PDFs if needed
+- Default size limit is 10MB per PDF file
+- Will create as many PDFs as needed to include all content
+- Warns if more PDFs are created than initially targeted
+- Each PDF includes clear file headers showing source markdown files
+
 ### Incremental Analysis
 The tool supports incremental analysis, preserving existing work:
 - Skip already analyzed conversations (based on matching IDs)

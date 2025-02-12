@@ -13,7 +13,7 @@ from weasyprint.text.fonts import FontConfiguration
 class PDFGenerator:
     """Handles conversion of markdown files to PDFs and merging of PDFs."""
     
-    def __init__(self, markdown_dir: str, output_dir: str, size_limit_mb: float = 10.0):
+    def __init__(self, markdown_dir: str, output_dir: str, size_limit_mb: float = 1.0):
         """Initialize the PDF generator.
         
         Args:
@@ -102,49 +102,53 @@ class PDFGenerator:
                     line-height: 1.5;
                 }
                 code {
-                    font-family: "SF Mono", Consolas, monospace;
-                    font-size: 0.9em;
-                    background: #f5f5f5;
-                    padding: 0.2em 0.4em;
-                    border-radius: 3px;
+                    font-family: monospace;
+                    font-size: 8pt;
                 }
                 table {
                     border-collapse: collapse;
                     width: 100%;
-                    margin: 1em 0;
-                    font-size: 0.9em;
+                    margin: 0.3em 0;
+                    font-size: 8pt;
                 }
                 th, td {
-                    border: 1px solid #ddd;
-                    padding: 0.7em;
+                    padding: 3px;
                     text-align: left;
                 }
-                th {
-                    background: #f5f5f5;
-                    font-weight: 600;
-                }
-                tr:nth-child(even) {
-                    background: #fafafa;
-                }
                 blockquote {
-                    margin: 1em 0;
-                    padding: 0 1em;
+                    margin: 0.5em 0;
+                    padding-left: 1em;
                     color: #666;
-                    border-left: 4px solid #ddd;
+                    border-left: 2px solid #ddd;
                 }
                 hr {
                     border: none;
-                    border-top: 2px solid #eee;
-                    margin: 2em 0;
+                    border-top: 1px solid #eee;
+                    margin: 1em 0;
                 }
             ''')
             
-            # Create PDF with WeasyPrint
+            # Create optimized PDF with compression
             font_config = FontConfiguration()
             try:
                 html = HTML(string=f"<html><body>{html_content}</body></html>")
-                doc = html.render(stylesheets=[css], font_config=font_config)
-                doc.write_pdf(pdf_file)
+                # Create minimal PDF with maximum compression
+                doc = html.render(
+                    stylesheets=[css],
+                    font_config=font_config,
+                    optimize_size=('fonts', 'images'),
+                    presentational_hints=True,  # Use HTML size hints
+                )
+                
+                doc.write_pdf(
+                    target=pdf_file,
+                    zoom=0.9,  # Slightly reduce size
+                    optimize_images=True,
+                    jpeg_quality=70,  # Reduce image quality
+                    compress=True,  # Enable compression
+                    attachments=[]  # No attachments needed
+                )
+                
                 # Explicitly release resources
                 del doc
                 del html
@@ -165,7 +169,7 @@ class PDFGenerator:
         
         Args:
             markdown_files: List of markdown files to merge
-            target_chunks: Target number of output files
+            target_chunks: Target number of output files initially
             
         Returns:
             List[Path]: List of paths to merged markdown files
@@ -173,37 +177,56 @@ class PDFGenerator:
         if not markdown_files:
             return []
             
-        # Calculate approximate chunk size
-        chunk_size = max(1, len(markdown_files) // target_chunks)
         merged_files = []
+        current_chunk = []
+        current_size = 0
+        chunk_index = 0
+        # PDF files with styling can be much larger than markdown, use very conservative factor
+        # Calculate markdown size limit accounting for PDF overhead
+        pdf_overhead_factor = 1.3   # PDFs are ~30% larger than markdown
+        md_size_limit = (self.size_limit_mb / pdf_overhead_factor) * 1024 * 1024
         
         with tqdm(total=len(markdown_files), desc='Merging markdown files') as pbar:
-            for i in range(0, len(markdown_files), chunk_size):
-                chunk = markdown_files[i:i + chunk_size]
-                merged_content = []
-                
-                for md_file in chunk:
-                    try:
-                        with open(md_file, 'r', encoding='utf-8') as f:
-                            content = f.read().strip()
-                            if content:  # Only add non-empty content
-                                # Add a clear header with file info and separator
-                                separator = "<div style='font-size: 8pt; color: #666;'>======================</div>"
-                                header = (
-                                    f"\n\n{separator}\n"  # Top separator
-                                    f"<div style='font-size: 8pt; color: #666;'>File: {md_file.name}</div>\n"  # Filename in smaller font
-                                    f"{separator}\n\n"  # Bottom separator
-                                )
-                                merged_content.append(header + content)
-                    except Exception as e:
-                        print(f"\nError reading {md_file}: {e}")
-                    pbar.update(1)
-                
-                if merged_content:
-                    merged_file = self.output_dir / f"merged_part_{i//chunk_size}.md"
-                    with open(merged_file, 'w', encoding='utf-8') as f:
-                        f.write('\n\n---\n\n'.join(merged_content))
-                    merged_files.append(merged_file)
+            for md_file in markdown_files:
+                try:
+                    file_size = md_file.stat().st_size
+                    with open(md_file, 'r', encoding='utf-8') as f:
+                        content = f.read().strip()
+                        if content:
+                            # If this file would exceed size limit, save current chunk and start new one
+                            if current_size + file_size > md_size_limit and current_chunk:
+                                merged_file = self.output_dir / f"merged_part_{chunk_index}.md"
+                                with open(merged_file, 'w', encoding='utf-8') as f:
+                                    f.write('\n\n---\n\n'.join(current_chunk))
+                                merged_files.append(merged_file)
+                                current_chunk = []
+                                current_size = 0
+                                chunk_index += 1
+                            
+                            # Add file to current chunk
+                            separator = "<div style='font-size: 8pt; color: #666;'>======================</div>"
+                            header = (
+                                f"\n\n{separator}\n"  # Top separator
+                                f"<div style='font-size: 8pt; color: #666;'>File: {md_file.name}</div>\n"  # Filename in smaller font
+                                f"{separator}\n\n"  # Bottom separator
+                            )
+                            current_chunk.append(header + content)
+                            current_size += file_size
+                except Exception as e:
+                    print(f"\nError reading {md_file}: {e}")
+                pbar.update(1)
+            
+            # Save final chunk if it has content
+            if current_chunk:
+                merged_file = self.output_dir / f"merged_part_{chunk_index}.md"
+                with open(merged_file, 'w', encoding='utf-8') as f:
+                    f.write('\n\n---\n\n'.join(current_chunk))
+                merged_files.append(merged_file)
+        
+        if len(merged_files) > target_chunks:
+            print(f"\nNote: Created {len(merged_files)} files to stay under size limit of {self.size_limit_mb}MB per file (original target was {target_chunks} files)")
+        
+        return merged_files
         
         return merged_files
     
@@ -313,21 +336,14 @@ class PDFGenerator:
         Returns:
             List[Path]: List of paths to generated PDF files
         """
-        # Convert markdown to PDFs
-        temp_pdfs = self.convert_all_markdown()
-        if not temp_pdfs:
-            return []
-        
-        # Merge PDFs
-        output_pdfs = self.merge_pdfs(temp_pdfs, num_chunks)
-        
-        # Clean up temporary files
-        self.cleanup_temp_files(temp_pdfs)
+        # Convert markdown directly to final PDFs
+        output_pdfs = self.convert_all_markdown()
         
         # Report results
-        print(f"\nCreated {len(output_pdfs)} PDF files with size limit of {self.size_limit_mb}MB")
-        for pdf in output_pdfs:
-            size_mb = pdf.stat().st_size / (1024 * 1024)
-            print(f"  {pdf.name}: {size_mb:.1f}MB")
-        
+        if output_pdfs:
+            print(f"\nCreated {len(output_pdfs)} PDF files with size limit of {self.size_limit_mb}MB")
+            for pdf in output_pdfs:
+                size_mb = pdf.stat().st_size / (1024 * 1024)
+                print(f"  {pdf.name}: {size_mb:.1f}MB")
+            
         return output_pdfs
