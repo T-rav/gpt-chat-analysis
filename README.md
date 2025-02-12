@@ -56,11 +56,11 @@ This makes it easy to:
 Example workflow:
 ```bash
 # Initial analysis
-python app.py -o my_analysis
+python app.py -o analysis
 
 # Later, add more chats and run again
-# (existing analysis files in my_analysis/ will be preserved)
-python app.py -o my_analysis
+# (existing analysis files in analysis/ will be preserved)
+python app.py -o analysis
 ```
 
 ## Requirements
