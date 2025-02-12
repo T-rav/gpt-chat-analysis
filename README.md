@@ -44,7 +44,7 @@ The tool supports incremental analysis, meaning you can:
 3. Run the analysis again
 
 The tool will:
-- Skip conversations that have already been analyzed (based on matching filenames)
+- Skip conversations that have already been analyzed (based on matching IDs)
 - Only process new conversations
 - Preserve all existing analysis files
 
