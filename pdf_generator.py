@@ -188,10 +188,11 @@ class PDFGenerator:
                             content = f.read().strip()
                             if content:  # Only add non-empty content
                                 # Add a clear header with file info and separator
+                                separator = "<div style='font-size: 8pt; color: #666;'>======================</div>"
                                 header = (
-                                    f"\n\n{'='*80}\n"  # Top separator
+                                    f"\n\n{separator}\n"  # Top separator
                                     f"<div style='font-size: 8pt; color: #666;'>File: {md_file.name}</div>\n"  # Filename in smaller font
-                                    f"{'='*80}\n\n"  # Bottom separator
+                                    f"{separator}\n\n"  # Bottom separator
                                 )
                                 merged_content.append(header + content)
                     except Exception as e:
