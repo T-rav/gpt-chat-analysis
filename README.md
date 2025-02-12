@@ -73,16 +73,22 @@ python app.py -o analysis
 ### Exporting ChatGPT Conversations
 
 1. Go to [chat.openai.com](https://chat.openai.com)
-2. Click on your profile picture in the bottom-left corner
-3. Select 'Settings'
-4. Click on 'Data controls'
-5. Under 'Export data', click 'Export'
-6. Wait for the export to be prepared (you'll receive an email)
-7. Download the export file (it will be a .zip)
-8. Extract the conversations.json file from the zip
-9. Copy the JSON file to your project's `chats` directory
+2. Click your profile picture (bottom-left) → Settings → Data controls
+3. Click 'Export' under 'Export data'
+4. Wait for the email and download the .zip file
+5. Extract the downloaded zip file
+6. Rename the extracted folder to `chats`
+7. Move the `chats` folder into your project directory
 
-Note: The export will contain all your ChatGPT conversations and related media. 
+Example:
+```bash
+# Assuming you downloaded to ~/Downloads/chatgpt-export.zip
+unzip ~/Downloads/chatgpt-export.zip -d ~/Downloads/chatgpt-temp
+mv ~/Downloads/chatgpt-temp/conversations chats
+mv chats /path/to/your/gpt-heatmap/
+```
+
+Note: The export contains all your ChatGPT conversations and related media.
 
 ## Installation
 
