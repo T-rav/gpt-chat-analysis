@@ -37,6 +37,32 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
   - Pattern identification
   - Recommendations for improvement
 
+### Incremental Analysis
+The tool supports incremental analysis, meaning you can:
+1. Keep your existing analysis files in the output directory
+2. Add new conversations to the `chats` directory
+3. Run the analysis again
+
+The tool will:
+- Skip conversations that have already been analyzed (based on matching filenames)
+- Only process new conversations
+- Preserve all existing analysis files
+
+This makes it easy to:
+- Analyze new conversations without redoing old ones
+- Update your analysis by just adding new chat files
+- Maintain a growing collection of analyzed conversations
+
+Example workflow:
+```bash
+# Initial analysis
+python app.py -o my_analysis
+
+# Later, add more chats and run again
+# (existing analysis files in my_analysis/ will be preserved)
+python app.py -o my_analysis
+```
+
 ## Requirements
 
 - Python 3.11+
