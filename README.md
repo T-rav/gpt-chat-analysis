@@ -127,12 +127,6 @@ python app.py -o custom_output_dir
 
 # Generate heatmap visualizations
 python app.py --heatmap
-
-# Generate PDFs from analysis (3 files)
-python app.py --pdf 3
-
-# Generate PDFs with custom size limit (10MB per file)
-python app.py --pdf 3 --pdf-size-limit 10
 ```
 
 ### PDF Generation
@@ -144,6 +138,10 @@ The tool can merge analysis markdown files into PDF documents for easier sharing
 
 Example command and output:
 ```bash
+# Generate PDFs (3 files)
+python app.py --pdf 3
+
+# Generate PDFs with custom size limit (10 files, 10MB per file)
 python app.py --pdf 10 --pdf-size-limit 10
 ```
 ```
