@@ -43,7 +43,7 @@ class Config:
     # PDF settings
     pdf_chunks: Optional[int] = None
     pdf_output_dir: str = 'analysis/pdf'
-    pdf_size_limit_mb: float = 50.0  # 50MB default size limit
+    pdf_size_limit_mb: float = 1.0  # 1MB default size limit
 
     def __post_init__(self) -> None:
         """Initialize configuration with environment variables."""

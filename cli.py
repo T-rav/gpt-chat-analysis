@@ -37,8 +37,8 @@ class CLIParser:
         parser.add_argument(
             '--pdf-size-limit',
             type=float,
-            default=10.0,
-            help='Maximum size in MB for each PDF file (default: 10MB)'
+            default=1.0,
+            help='Maximum size in MB for each PDF file (default: 1MB)'
         )
         parser.add_argument(
             '-d', '--date',
