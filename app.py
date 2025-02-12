@@ -177,7 +177,9 @@ class ConversationData:
             response = self.openai_client.chat.completions.create(
                 model=self.config.model,
                 messages=[
-                    {"role": "system", "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems. Analyze the USER's behavior in the following conversation. YOU MUST USE THE EXACT SECTION HEADINGS AND FORMAT PROVIDED BELOW:
+                    {
+  "role": "system",
+  "content": """You are an expert analyst focused on evaluating how effectively users interact with AI systems, ensuring compliance with guidelines, identifying the variations applied in each step of the AI Decision Loop, and tracking collaborative work patterns. Analyze the USER's behavior in the following conversation. YOU MUST USE THE EXACT SECTION HEADINGS AND FORMAT PROVIDED BELOW:
 
 # 1. Brief Summary
 [Provide a concise overview of the USER's objectives and approach]
@@ -188,26 +190,41 @@ class ConversationData:
 - Effectiveness: [How well did the USER define and communicate their needs?]
 - Evidence: [Specific examples of clear/unclear problem framing]
 - Impact: [How this affected the conversation flow]
+- Compliance Check: [Did the USER adhere to best practices, ethical considerations, and constraints? Any gaps?]
+- Variation Applied: [If any, list which variation(s) were used in problem framing]
+- Collaborative Pattern Applied: [Did the USER employ paired work principles? If so, which?]
 
 ## Step 2: Response Evaluation & Validation
 - Effectiveness: [How thoroughly did the USER evaluate AI responses?]
 - Evidence: [Examples of verification, questioning, or acceptance]
 - Impact: [How this shaped solution quality]
+- Compliance Check: [Did the USER validate AI outputs properly, including checking for bias, coherence, and feasibility?]
+- Variation Applied: [If any, list which variation(s) were used in response validation]
+- Collaborative Pattern Applied: [Did the USER apply collaborative work patterns such as AI critiquing its own output or refining a draft?]
 
 ## Step 3: Expertise Application
 - Effectiveness: [How well did the USER leverage their domain knowledge?]
 - Evidence: [Examples of constraints or guidance provided]
 - Impact: [How this improved solution relevance]
+- Compliance Check: [Did the USER ensure that AI’s recommendations aligned with real-world constraints and expertise?]
+- Variation Applied: [If any, list which variation(s) were used in expertise application]
+- Collaborative Pattern Applied: [Did the USER prompt AI to challenge assumptions or provide alternative viewpoints?]
 
 ## Step 4: Critical Assessment
 - Effectiveness: [How well did the USER assess limitations and risks?]
 - Evidence: [Examples of testing assumptions or identifying issues]
 - Impact: [How this prevented potential problems]
+- Compliance Check: [Did the USER properly challenge AI assumptions and test for ethical, logical, or factual errors?]
+- Variation Applied: [If any, list which variation(s) were used in critical assessment]
+- Collaborative Pattern Applied: [Did the USER use AI as a thought partner, asking it to justify reasoning or provide counterarguments?]
 
 ## Step 5: Process Improvement
 - Effectiveness: [How did the USER refine and improve their approach?]
 - Evidence: [Examples of learning and adaptation]
 - Impact: [How this led to better outcomes]
+- Compliance Check: [Did the USER document and refine AI usage for continuous improvement?]
+- Variation Applied: [If any, list which variation(s) were used in process improvement]
+- Collaborative Pattern Applied: [Did the USER integrate AI-driven feedback loops to enhance future decisions?]
 
 ## Overall Decision Loop Assessment
 - Strongest Steps: [List the most effective steps]
@@ -217,12 +234,12 @@ class ConversationData:
 # 3. Collaborative Pattern Analysis
 
 ## Observed Patterns
-- [List and analyze patterns the USER employed]
-- [Evaluate effectiveness of collaboration]
+- [List and analyze collaborative patterns the USER employed]
+- [Evaluate effectiveness of AI interaction based on paired work principles]
 - [Provide specific examples]
 
 ## Novel Patterns
-- [Identify any unique approaches]
+- [Identify any unique collaborative approaches]
 - [Assess their effectiveness]
 - [Discuss potential benefits for others]
 
@@ -231,7 +248,20 @@ class ConversationData:
 - [Actionable steps for better AI collaboration]
 - [Strategic adjustments to enhance outcomes]
 
-You must maintain this exact structure and these exact headings in your response. Replace the text in brackets with your analysis while keeping the heading hierarchy and formatting consistent."""},
+## Collaborative Work Principles to Track:
+- **AI-Driven Decision Intelligence**
+  - AI generates an initial draft, the user iterates on it.
+  - The user provides a rough outline, AI expands with more depth.
+- **AI as a Critic**
+  - AI critiques its own output when asked to refine content.
+  - AI critiques the user's draft to refine tone, flow, grammar, etc.
+- **AI as a Thought Partner**
+  - AI provides counterarguments and alternative perspectives.
+  - AI explains reasoning when challenged, improving trust and decision clarity.
+
+You must maintain this exact structure and these exact headings in your response. Replace the text in brackets with your analysis while keeping the heading hierarchy and formatting consistent."""
+},
+
                     {"role": "user", "content": conversation}
                 ],
                 temperature=self.config.temperature
@@ -266,7 +296,16 @@ You must maintain this exact structure and these exact headings in your response
         # Create research folder if it doesn't exist
         os.makedirs(self.config.research_folder, exist_ok=True)
         
-        total_count = len(self.conversations)
+        # Filter conversations by start date if specified
+        filtered_conversations = self.conversations
+        if self.config.start_date:
+            filtered_conversations = [
+                conv for conv in self.conversations
+                if self.convo_times[conv['id']].date() >= self.config.start_date
+            ]
+            print(f"\nFiltered to {len(filtered_conversations)} conversations after {self.config.start_date}")
+        
+        total_count = len(filtered_conversations)
         processed_count = 0
         skipped_count = 0
         error_count = 0
@@ -276,7 +315,7 @@ You must maintain this exact structure and these exact headings in your response
         # Use ThreadPoolExecutor with progress bar
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             futures = []
-            for conv in self.conversations:
+            for conv in filtered_conversations:
                 future = executor.submit(self.analyze_and_save_chat, conv, self.config.research_folder)
                 futures.append(future)
             
@@ -314,13 +353,18 @@ You must maintain this exact structure and these exact headings in your response
         if error_count > 0:
             print(f"Errors:            {error_count}")
     
-    def _process_timestamps(self) -> List[datetime]:
-        """Process conversation timestamps into datetime objects."""
-        return [
-            datetime.fromtimestamp(conv['create_time'], tz=timezone.utc)
+    def _process_timestamps(self) -> Dict[str, datetime]:
+        """Process conversation timestamps into datetime objects.
+        
+        Returns:
+            Dict[str, datetime]: Mapping of conversation IDs to their timestamps
+        """
+        return {
+            str(conv.get('id')): datetime.fromtimestamp(conv.get('create_time', 0), tz=timezone.utc)
             .astimezone(pytz.timezone(self.config.local_tz))
             for conv in self.conversations
-        ]
+            if conv.get('id') and conv.get('create_time')
+        }
         
 
 
@@ -349,7 +393,8 @@ def main() -> None:
             research_folder=args.output,
             pdf_chunks=args.pdf,
             pdf_output_dir=args.pdf_dir,
-            pdf_size_limit_mb=args.pdf_size_limit
+            pdf_size_limit_mb=args.pdf_size_limit,
+            start_date=args.date
         )
         
         # Skip analysis if only PDF generation is requested

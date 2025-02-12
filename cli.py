@@ -1,6 +1,7 @@
 """Command-line interface for the chat analysis tool."""
 
 import argparse
+from datetime import datetime
 from typing import Any
 
 class CLIParser:
@@ -38,5 +39,10 @@ class CLIParser:
             type=float,
             default=10.0,
             help='Maximum size in MB for each PDF file (default: 10MB)'
+        )
+        parser.add_argument(
+            '-d', '--date',
+            type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
+            help='Start date for analysis (format: YYYY-MM-DD)'
         )
         return parser.parse_args()

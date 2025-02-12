@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from datetime import date
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -35,6 +36,9 @@ class Config:
     
     # Processing settings
     max_workers: int = min(8, os.cpu_count() or 4)  # Limit to 8 or CPU count, whichever is smaller
+    
+    # Analysis settings
+    start_date: Optional[date] = None
     
     # PDF settings
     pdf_chunks: Optional[int] = None

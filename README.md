@@ -49,6 +49,7 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 The tool supports incremental analysis, preserving existing work:
 - Skip already analyzed conversations (based on matching IDs)
 - Only process new conversations
+- Filter conversations by date using the `-d` option (e.g., `-d 2024-01-01` to analyze only conversations after January 1st, 2024)
 - Keep all existing analysis files
 
 Example workflow:
@@ -152,7 +153,10 @@ Created 4 PDF files with size limit of 10.0MB
 ```
 
 Options:
+- `-o, --output`: Output directory for analysis files (default: 'analysis')
+- `-d, --date`: Start date for analysis (format: YYYY-MM-DD). If not provided, analyzes all conversations
 - `--pdf N`: Number of PDF files to generate
+- `--pdf-dir`: Output directory for PDF files (default: 'pdf_analysis')
 - `--pdf-size-limit MB`: Maximum size per PDF (default: 10MB)
 
 Requires WeasyPrint. On macOS:
