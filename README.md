@@ -40,7 +40,7 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 ### PDF Generation
 - Automatically converts markdown reports to PDFs
 - Manages file size by splitting into multiple PDFs if needed
-- Default size limit is 10MB per PDF file
+- Default size limit is 1MB per PDF file
 - Will create as many PDFs as needed to include all content
 - Warns if more PDFs are created than initially targeted
 - Each PDF includes clear file headers showing source markdown files
@@ -135,8 +135,8 @@ Generate PDFs from analysis files for easier sharing:
 # Generate PDFs (3 files)
 python app.py --pdf 3
 
-# Generate PDFs with custom size limit (10 files, 10MB per file)
-python app.py --pdf 10 --pdf-size-limit 10
+# Generate PDFs with custom size limit (10 files, 5MB per file)
+python app.py --pdf 10 --pdf-size-limit 5
 ```
 
 Example output:
@@ -156,7 +156,7 @@ Options:
 - `-o, --output`: Output directory for analysis files (default: 'analysis')
 - `-d, --date`: Start date for analysis (format: YYYY-MM-DD). If not provided, analyzes all conversations
 - `--pdf N`: Number of PDF files to generate
-- `--pdf-size-limit MB`: Maximum size per PDF (default: 10MB)
+- `--pdf-size-limit MB`: Maximum size per PDF (default: 1MB)
 
 Requires WeasyPrint. On macOS:
 ```bash
