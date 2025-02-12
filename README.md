@@ -26,7 +26,7 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 ![image](https://github.com/user-attachments/assets/000772ed-7754-4ee3-84b7-0a2cd5f3aaa3)
 
 - Creates visual heatmaps showing:
-  - Conversation frequency by day and hour
+  - Conversation frequency by day
   - Usage patterns over time
   - Interaction hotspots
 
