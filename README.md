@@ -49,6 +49,33 @@ The tool will:
 - Preserve all existing analysis files
 
 This makes it easy to:
+
+### PDF Generation
+You can generate PDF files from your analysis markdown files. The tool will automatically split the PDFs based on a size limit to ensure they remain manageable.
+
+Example command:
+```bash
+python app.py --pdf 10 --pdf-size-limit 10
+```
+
+This will:
+- Convert all markdown files to PDFs
+- Merge them into multiple PDFs with a 10MB target size limit
+- Save the PDFs in the `pdf_analysis` directory
+
+Example output:
+```
+Generating 10 PDF files from existing markdown...
+Converting markdown files to PDF: 100%|████████████| 2285/2285 [03:05<00:00, 12.30it/s]
+Merging PDFs: 100%|████████████| 2285/2285 [00:28<00:00, 81.47it/s]
+
+Created 4 PDF files with size limit of 10.0MB
+  analysis_part_1.pdf: 13.4MB
+  analysis_part_2.pdf: 13.8MB
+  analysis_part_3.pdf: 13.9MB
+  analysis_part_4.pdf: 6.9MB
+```
+
 - Analyze new conversations without redoing old ones
 - Update your analysis by just adding new chat files
 - Maintain a growing collection of analyzed conversations
