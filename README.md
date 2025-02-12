@@ -38,21 +38,10 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
   - Recommendations for improvement
 
 ### Incremental Analysis
-The tool supports incremental analysis, meaning you can:
-1. Keep your existing analysis files in the output directory
-2. Add new conversations to the `chats` directory
-3. Run the analysis again
-
-The tool will:
-- Skip conversations that have already been analyzed (based on matching IDs)
+The tool supports incremental analysis, preserving existing work:
+- Skip already analyzed conversations (based on matching IDs)
 - Only process new conversations
-- Preserve all existing analysis files
-
-This makes it easy to:
-
-- Analyze new conversations without redoing old ones
-- Update your analysis by just adding new chat files
-- Maintain a growing collection of analyzed conversations
+- Keep all existing analysis files
 
 Example workflow:
 ```bash
@@ -60,7 +49,7 @@ Example workflow:
 python app.py -o analysis
 
 # Later, add more chats and run again
-# (existing analysis files in analysis/ will be preserved)
+# (existing files in analysis/ are preserved)
 python app.py -o analysis
 ```
 
@@ -131,12 +120,8 @@ python app.py --heatmap
 
 ### PDF Generation
 
-The tool can merge analysis markdown files into PDF documents for easier sharing and reading:
+Generate PDFs from analysis files for easier sharing:
 
-- `--pdf N`: Generate approximately N PDF files (may create more to respect size limits)
-- `--pdf-size-limit MB`: Maximum size per PDF in megabytes (default: 10MB)
-
-Example command and output:
 ```bash
 # Generate PDFs (3 files)
 python app.py --pdf 3
@@ -144,6 +129,8 @@ python app.py --pdf 3
 # Generate PDFs with custom size limit (10 files, 10MB per file)
 python app.py --pdf 10 --pdf-size-limit 10
 ```
+
+Example output:
 ```
 Generating 10 PDF files from existing markdown...
 Converting markdown files to PDF: 100%|████████████| 2285/2285 [03:05<00:00, 12.30it/s]
@@ -156,36 +143,25 @@ Created 4 PDF files with size limit of 10.0MB
   analysis_part_4.pdf: 6.9MB
 ```
 
-The PDF generation process:
-1. Converts each markdown file to PDF
-2. Sorts PDFs by size (largest first)
-3. Merges PDFs while respecting size limits
-4. Reports size of each generated file
+Options:
+- `--pdf N`: Number of PDF files to generate
+- `--pdf-size-limit MB`: Maximum size per PDF (default: 10MB)
 
-The PDF generation uses WeasyPrint, which requires system dependencies. On macOS:
+Requires WeasyPrint. On macOS:
 ```bash
 brew install python-tk cairo pango gdk-pixbuf libffi
 ```
 
-For other operating systems, see [WeasyPrint's installation guide](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation).
+For other OS, see [WeasyPrint's installation guide](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation).
 
 ### Configuration
 
-You can customize the analysis by modifying the `Config` class in `configuration.py`:
-- `CONVO_FOLDER`: Location of conversation files
-- `RESEARCH_FOLDER`: Default output directory
-- `DEFAULT_MODEL`: GPT model to use (default: 'gpt-4')
+Customize analysis settings in `configuration.py`:
+- `CONVO_FOLDER`: Chat files location
+- `RESEARCH_FOLDER`: Output directory
+- `DEFAULT_MODEL`: GPT model (default: 'gpt-4')
 - `DEFAULT_TEMPERATURE`: Model temperature (default: 0.62)
-- `MAX_WORKERS`: Number of parallel analysis threads
-
-## Output Structure
-
-```
-output_directory/
-├── conversation_id1.md
-├── conversation_id2.md
-└── ...
-```
+- `MAX_WORKERS`: Parallel analysis threads
 
 Each markdown file contains:
 
