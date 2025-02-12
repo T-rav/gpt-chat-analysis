@@ -156,7 +156,6 @@ Options:
 - `-o, --output`: Output directory for analysis files (default: 'analysis')
 - `-d, --date`: Start date for analysis (format: YYYY-MM-DD). If not provided, analyzes all conversations
 - `--pdf N`: Number of PDF files to generate
-- `--pdf-dir`: Output directory for PDF files (default: 'pdf_analysis')
 - `--pdf-size-limit MB`: Maximum size per PDF (default: 10MB)
 
 Requires WeasyPrint. On macOS:

@@ -269,17 +269,15 @@ You must maintain this exact structure and these exact headings in your response
             
             analysis = response.choices[0].message.content
             
-            # Write just the analysis to file
+            # Write analysis to file only if API call succeeds
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(analysis)
+            return filepath, True  # Successfully processed
             
         except Exception as e:
             print(f"\nError analyzing chat {chat_id}: {str(e)}")
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(f"Error: {str(e)}")
-            return filepath, True  # Still processed, even though there was an error
-        
-        return filepath, True  # Successfully processed
+            # Don't write error file, just return as skipped
+            return filepath, False  # Count as skipped when API fails
 
     def analyze_single_chat(self, chat_id: str) -> None:
         """Analyze a specific chat and save the analysis as a markdown file."""
@@ -299,11 +297,12 @@ You must maintain this exact structure and these exact headings in your response
         # Filter conversations by start date if specified
         filtered_conversations = self.conversations
         if self.config.start_date:
+            original_count = len(filtered_conversations)
             filtered_conversations = [
-                conv for conv in self.conversations
+                conv for conv in filtered_conversations
                 if self.convo_times[conv['id']].date() >= self.config.start_date
             ]
-            print(f"\nFiltered to {len(filtered_conversations)} conversations after {self.config.start_date}")
+            print(f"\nFiltered from {original_count} to {len(filtered_conversations)} conversations after {self.config.start_date}")
         
         total_count = len(filtered_conversations)
         processed_count = 0
