@@ -1,3 +1,9 @@
+# Local
+.DS_Store
+analysis/
+chats/
+myenv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
