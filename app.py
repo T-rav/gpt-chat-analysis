@@ -352,23 +352,22 @@ def main() -> None:
             pdf_size_limit_mb=args.pdf_size_limit
         )
         
-        # Process conversations
-        print(f"\nInitializing chat analysis...")
-        data = ConversationData(config)
-        
-        # Run analysis
-        print(f"\nStarting parallel analysis...")
-        data.analyze_all_chats_parallel()
-        
-        # Generate PDFs if requested
+        # Skip analysis if only PDF generation is requested
         if args.pdf:
-            print(f"\nMerging analysis into {args.pdf} PDF files...")
+            print(f"\nGenerating {args.pdf} PDF files from existing markdown...")
             pdf_gen = PDFGenerator(
                 markdown_dir=args.output,
                 output_dir=args.pdf_dir,
                 size_limit_mb=config.pdf_size_limit_mb
             )
             pdf_gen.generate_pdfs(args.pdf)
+            return
+            
+        # Process conversations and run analysis
+        print(f"\nInitializing chat analysis...")
+        data = ConversationData(config)
+        print(f"\nStarting parallel analysis...")
+        data.analyze_all_chats_parallel()
         
         print(f"\nAnalysis complete! Results saved to: {args.output}")
         if args.pdf:

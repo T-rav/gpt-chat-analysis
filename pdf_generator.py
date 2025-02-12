@@ -105,11 +105,23 @@ class PDFGenerator:
             print("No markdown files found to convert to PDF")
             return []
         
+        # Process in batches of 50 to avoid memory issues
+        batch_size = 50
         temp_pdfs = []
-        for md_file in tqdm(markdown_files, desc='Converting markdown files to PDF'):
-            pdf_file, success = self.convert_markdown_to_pdf(md_file)
-            if success:
-                temp_pdfs.append(pdf_file)
+        total_files = len(markdown_files)
+        
+        with tqdm(total=total_files, desc='Converting markdown files to PDF') as pbar:
+            for i in range(0, total_files, batch_size):
+                batch = markdown_files[i:i + batch_size]
+                for md_file in batch:
+                    pdf_file, success = self.convert_markdown_to_pdf(md_file)
+                    if success:
+                        temp_pdfs.append(pdf_file)
+                    pbar.update(1)
+                
+                # Force garbage collection after each batch
+                import gc
+                gc.collect()
         
         return temp_pdfs
     
