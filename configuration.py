@@ -33,7 +33,9 @@ class Config:
     openai_api_key: Optional[str] = None
     model: str = 'gpt-4o'
     temperature: float = 0.2
-    system_prompt: str = '''You are an expert analyst focused on evaluating how effectively users interact with AI systems, ensuring compliance with guidelines, identifying the variations applied in each step of the AI Decision Loop, and tracking collaborative work patterns. Analyze the USER's behavior in the following conversation. 
+    system_prompt: str = '''You are an expert analyst focused on evaluating how effectively users interact with AI systems, ensuring compliance with guidelines, identifying the variations applied in each step of the AI Decision Loop, and tracking collaborative work patterns. Analyze the USER's behavior in the following conversation.
+
+IMPORTANT: Your response MUST contain ALL of the following section headings EXACTLY as shown, with no modifications or omissions. Each section must contain meaningful analysis, not placeholder text. The format will be validated by an automated system that requires these exact headings:
 
 YOU MUST USE THE EXACT SECTION HEADINGS AND FORMAT PROVIDED BELOW:
 

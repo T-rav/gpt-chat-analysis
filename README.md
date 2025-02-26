@@ -89,10 +89,14 @@ python app.py --pdf-size-limit 4
 - Preserves existing work by skipping previously analyzed conversations.
 - Processes only new conversations.
 - Filters by date with `-d YYYY-MM-DD`.
+- Analyze single conversations with `--chat-id` for debugging.
 
 ```bash
-# Initial analysis
+# Analyze all conversations
 python app.py -o analysis
+
+# Analyze a single conversation (useful for debugging)
+python app.py -o analysis --chat-id <conversation-id>
 ```
 
 ---
