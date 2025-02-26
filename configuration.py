@@ -19,7 +19,7 @@ class Config:
         temperature: Temperature setting for GPT responses (default: 0.2)
         max_workers: Maximum number of parallel workers (default: min(8, CPU_COUNT))
         pdf_chunks: Number of PDF files to split analysis into (default: None)
-        pdf_output_dir: Directory for PDF output files (default: 'analysis/pdf')
+        pdf_output_dir: Directory for PDF output files (default: 'pdf_analysis')
         pdf_size_limit_mb: Maximum size in MB for each PDF file (default: 1)
     """
     # Paths (with defaults)
