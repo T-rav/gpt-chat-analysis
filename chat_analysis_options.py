@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Dict, Any
 
 from cli import CLIParser
@@ -87,10 +88,23 @@ class ChatAnalysisOptions:
                     raise FileNotFoundError(f"Chat file not found: {target_file}")
                     
                 print(f"\nAnalyzing single chat: {self.args.chat_id}")
-                stats = analyzer._process_file(target_file)
+                
+                # Check if we can use existing analysis
+                if not analyzer._should_process_file(target_file):
+                    print(f"Using existing analysis for {self.args.chat_id}")
+                    json_path = os.path.join(
+                        analyzer.output_dir,
+                        f"{self.args.chat_id}.json"
+                    )
+                    with open(json_path, 'r') as f:
+                        stats = json.load(f)
+                else:
+                    stats = analyzer._process_file(target_file)
+                
                 print("\nAnalysis Results:")
                 for key, value in stats.items():
-                    print(f"  {key}: {value}")
+                    if key not in ['raw_analysis', 'summary']:  # Skip verbose fields
+                        print(f"  {key}: {value}")
                     
             elif analysis_dir:
                 # Full directory analysis

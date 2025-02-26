@@ -30,6 +30,27 @@ class TrendProcessor:
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
     
+    def _should_process_file(self, md_path: str) -> bool:
+        """Check if a markdown file needs to be processed.
+        
+        Args:
+            md_path (str): Path to the markdown file
+            
+        Returns:
+            bool: True if file should be processed, False if it can be skipped
+        """
+        json_path = os.path.join(
+            self.output_dir,
+            os.path.splitext(os.path.basename(md_path))[0] + '.json'
+        )
+        
+        if os.path.exists(json_path):
+            md_mtime = os.path.getmtime(md_path)
+            json_mtime = os.path.getmtime(json_path)
+            if json_mtime >= md_mtime:
+                return False
+        return True
+
     def analyze_directory(self, directory):
         """Analyze markdown files in the specified directory for loop completion.
         
@@ -52,6 +73,20 @@ class TrendProcessor:
         for filename in os.listdir(directory):
             if filename.endswith(".md"):
                 filepath = os.path.join(directory, filename)
+                
+                # Skip if we already have analysis
+                if not self._should_process_file(filepath):
+                    print(f"Skipping {filename} - analysis exists")
+                    # Load existing stats
+                    json_path = os.path.join(
+                        self.output_dir,
+                        os.path.splitext(filename)[0] + '.json'
+                    )
+                    with open(json_path, 'r') as f:
+                        stats = json.load(f)
+                    stats_list.append(stats)
+                    continue
+                
                 stats = self._process_file(filepath)
                 stats_list.append(stats)
                 
