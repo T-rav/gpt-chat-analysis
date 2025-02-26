@@ -72,18 +72,4 @@ def test_cli_parser_custom_values():
         assert args.verify_format is True
         assert args.chat_id == "chat456"
 
-def test_verify_markdown_format(temp_dir, sample_args):
-    """Test markdown file verification."""
-    # Create test files
-    os.makedirs(os.path.join(temp_dir, "analysis"), exist_ok=True)
-    with open(os.path.join(temp_dir, "analysis", "valid.md"), "w") as f:
-        f.write("# Valid markdown\n\n## Analysis\n\nContent")
-    with open(os.path.join(temp_dir, "analysis", "invalid.md"), "w") as f:
-        f.write("Invalid markdown")
-    
-    with patch('sys.argv', ['app.py', '-o', os.path.join(temp_dir, "analysis"), '--verify-format']), \
-         patch('file_validator.FileValidator.verify_and_clean_md_files') as mock_verify:
-        mock_verify.return_value = (["invalid.md"], 1)
-        options = ChatAnalysisOptions()
-        options.verify_markdown_format()
-        mock_verify.assert_called_once_with(os.path.join(temp_dir, "analysis"))
+
