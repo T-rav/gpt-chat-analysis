@@ -16,3 +16,7 @@ PyPDF2>=3.0.0
 
 # HTTP client (required by OpenAI)
 httpx>=0.28.0
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.12.0
