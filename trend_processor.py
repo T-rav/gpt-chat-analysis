@@ -1,7 +1,9 @@
 import os
 import json
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
-from typing import Dict, Any
+from typing import Dict, Any, List
 from configuration import Config
 class TrendProcessor:
     """Handles analysis of markdown files for chat completion statistics.
@@ -51,7 +53,38 @@ class TrendProcessor:
                 return False
         return True
 
-    def analyze_directory(self, directory):
+    def _process_file_with_cache(self, filepath: str) -> Dict:
+        """Process a file, using cached results if available.
+        
+        Args:
+            filepath (str): Path to the markdown file
+            
+        Returns:
+            dict: Analysis results, either from cache or newly processed
+        """
+        filename = os.path.basename(filepath)
+        
+        # Check for cached results
+        if not self._should_process_file(filepath):
+            print(f"Using cached analysis for {filename}")
+            json_path = os.path.join(
+                self.output_dir,
+                os.path.splitext(filename)[0] + '.json'
+            )
+            with open(json_path, 'r') as f:
+                return json.load(f)
+        
+        # Process file if no cache available
+        stats = self._process_file(filepath)
+        
+        # Print result
+        status = "✓" if stats['completed'] == 1 else "✗"
+        exit_info = f" (Exit: {stats['exit_step']})" if not stats['completed'] else ""
+        print(f"{filename}: {status}{exit_info}")
+        
+        return stats
+
+    def analyze_directory(self, directory: str) -> Dict:
         """Analyze markdown files in the specified directory for loop completion.
         
         Args:
@@ -66,34 +99,34 @@ class TrendProcessor:
         if not os.path.isdir(directory):
             raise FileNotFoundError(f"The directory '{directory}' does not exist.")
         
-        stats_list = []
+        # Get list of markdown files
+        md_files = [
+            os.path.join(directory, f) for f in os.listdir(directory)
+            if f.endswith('.md')
+        ]
         
-        # Process each markdown file
-        print("\nAnalyzing files:")
-        for filename in os.listdir(directory):
-            if filename.endswith(".md"):
-                filepath = os.path.join(directory, filename)
-                
-                # Skip if we already have analysis
-                if not self._should_process_file(filepath):
-                    print(f"Skipping {filename} - analysis exists")
-                    # Load existing stats
-                    json_path = os.path.join(
-                        self.output_dir,
-                        os.path.splitext(filename)[0] + '.json'
-                    )
-                    with open(json_path, 'r') as f:
-                        stats = json.load(f)
+        if not md_files:
+            print("No markdown files found to analyze")
+            return {}
+        
+        print(f"\nAnalyzing {len(md_files)} files in parallel:")
+        
+        # Process files in parallel
+        stats_list = []
+        max_workers = min(mp.cpu_count(), len(md_files))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_file = {
+                executor.submit(self._process_file_with_cache, f): f 
+                for f in md_files
+            }
+            
+            for future in as_completed(future_to_file):
+                try:
+                    stats = future.result()
                     stats_list.append(stats)
-                    continue
-                
-                stats = self._process_file(filepath)
-                stats_list.append(stats)
-                
-                # Print per-file results
-                status = "✓" if stats['completed'] == 1 else "✗"
-                exit_info = f" (Exit: {stats['exit_step']})" if not stats['completed'] else ""
-                print(f"Result: {status}{exit_info}")
+                except Exception as e:
+                    file = future_to_file[future]
+                    print(f"Error processing {os.path.basename(file)}: {str(e)}")
         
         return self._generate_summary(stats_list)
     
@@ -141,19 +174,17 @@ class TrendProcessor:
         
         user_prompt = f"Analyze this conversation and return ONLY a JSON object according to the specified format:\n\n{text}"
         
-        print(f"  Sending to OpenAI ({self.model})...")
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=self.temperature
-        )
-        
         try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=self.temperature
+            )
+            
             result = response.choices[0].message.content.strip()
-            print(f"  OpenAI response: {result}")
             
             # Clean the response - remove markdown code blocks if present
             if result.startswith('```'):
@@ -192,11 +223,9 @@ class TrendProcessor:
             json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
             with open(json_filename, 'w') as f:
                 json.dump(analysis, f, indent=2)
-            print(f"  Analysis saved to: {json_filename}")
             
             return analysis
         except Exception as e:
-            print(f"  Warning: Error processing OpenAI response for {filename}: {str(e)}")
             default_analysis = {
                 'loop_completion': {'completed': False, 'exit_at_step_one': True, 'skipped_validation': False},
                 'breakdown': {'exit_step': 'unknown', 'failure_reason': 'Failed to parse analysis'},
@@ -207,7 +236,6 @@ class TrendProcessor:
             json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
             with open(json_filename, 'w') as f:
                 json.dump(default_analysis, f, indent=2)
-            print(f"  Default analysis saved to: {json_filename}")
             
             return default_analysis
 
