@@ -4,6 +4,7 @@ analysis/
 chats/
 myenv/
 exports/
+.coverage
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
