@@ -1,5 +1,3 @@
-"""Module for analyzing markdown files containing chat completion data."""
-
 import os
 import re
 

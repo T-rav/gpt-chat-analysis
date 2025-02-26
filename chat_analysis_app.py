@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any
 
 from cli import CLIParser
-from config import Config
+from configuration import Config
 from conversation_data import ConversationData
 from pdf_generator import PDFGenerator
 from analysis_processor import AnalysisProcessor
