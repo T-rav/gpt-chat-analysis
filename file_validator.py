@@ -36,11 +36,29 @@ class FileValidator:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+            
+            # Check for generic content that indicates an incomplete analysis
+            generic_content_indicators = [
+                "The USER engaged with the AI",
+                "objectives and approach are not provided",
+                "lack of conversation content"
+            ]
+            
+            for indicator in generic_content_indicators:
+                if indicator in content:
+                    logging.warning(f"File {file_path} contains generic placeholder content")
+                    return False
                 
             # Check if all required sections are present
+            missing_sections = []
             for section in required_sections:
                 if section not in content:
-                    return False
+                    missing_sections.append(section)
+            
+            if missing_sections:
+                logging.warning(f"File {file_path} is missing required sections: {', '.join(missing_sections)}")
+                return False
+                
             return True
         except Exception as e:
             logging.error(f"Error reading file {file_path}: {str(e)}")
