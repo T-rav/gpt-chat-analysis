@@ -39,10 +39,9 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
 
 ### Chat Export
 - Export individual chat histories in multiple formats:
-  - Text format with clear role separation
-  - Markdown format with headers and separators
+  - Text format with clear role separation and timestamps
   - JSON format for full conversation data
-- Automatically timestamped output files
+- Automatically named output files
 - Exports stored in dedicated 'exports' directory
 
 Example:

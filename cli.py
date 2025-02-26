@@ -53,7 +53,7 @@ class CLIParser:
         parser.add_argument(
             '--export-format',
             type=str,
-            choices=['json', 'txt', 'md'],
+            choices=['json', 'txt'],
             default='txt',
             help='Format for chat export (default: txt)'
         )
