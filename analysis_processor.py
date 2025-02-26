@@ -3,6 +3,7 @@
 import os
 import re
 
+# todo : use LLM and aggregate stats
 class AnalysisProcessor:
     """Handles analysis of markdown files for chat completion statistics.
     
