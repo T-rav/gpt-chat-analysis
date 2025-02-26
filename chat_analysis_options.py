@@ -42,7 +42,7 @@ class ChatAnalysisOptions:
         print(f"\nExporting chat {self.args.export_chat}...")
         data = ConversationData(self.config)
         output_file = data.export_chat_history(self.args.export_chat, self.args.export_format)
-        print(f"Chat exported to: {output_file}")
+        print(f"Chat exported to: {os.path.relpath(output_file)}")
     
     def generate_pdfs(self) -> None:
         """Generate PDF files from markdown analysis."""

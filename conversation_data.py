@@ -299,52 +299,160 @@ class ConversationData:
             with open(output_file, 'w') as f:
                 mapping = target_conv.get('mapping', {})
                 print(f"Found {len(mapping)} messages in mapping")
-                for msg_id, msg_data in mapping.items():
-                    print(f"\nProcessing message {msg_id}")
-                    print(f"Full message data: {msg_data}")
-                    if isinstance(msg_data, dict) and 'message' in msg_data:
-                        message = msg_data['message']
+                print(f"Exporting to chat_exports directory...")
+                
+                # Write header
+                f.write(f"Chat Export - ID: {chat_id}\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("-" * 80 + "\n\n")
+                
+                # Function to traverse message tree
+                def traverse_messages(node_id, visited=None):
+                    if visited is None:
+                        visited = set()
+                    
+                    if node_id in visited:
+                        return []
+                    visited.add(node_id)
+                    
+                    node_data = mapping.get(node_id)
+                    if not node_data:
+                        return []
+                    
+                    # Get message data
+                    message = node_data.get('message')
+                    result = []
+                    
+                    # Add parent's message first
+                    parent_id = node_data.get('parent')
+                    if parent_id:
+                        result.extend(traverse_messages(parent_id, visited))
+                    
+                    # Add current message
+                    if message:
+                        result.append(message)
+                    
+                    # Add children's messages
+                    children = node_data.get('children', [])
+                    for child_id in children:
+                        result.extend(traverse_messages(child_id, visited))
+                    
+                    return result
+                
+                # Find root nodes
+                root_nodes = []
+                for node_id, node_data in mapping.items():
+                    if not node_data.get('parent'):
+                        root_nodes.append(node_id)
+                print(f"Found {len(root_nodes)} root nodes")
+                
+                # Process messages in order
+                for root_id in root_nodes:
+                    messages = traverse_messages(root_id)
+                    for message in messages:
                         if isinstance(message, dict):
-                            content = message.get('content')
-                            role = message.get('author', {}).get('role', 'unknown')
-                            print(f"Role: {role}")
+                            # Extract basic message info
+                            content = message.get('content', {})
+                            author = message.get('author', {})
+                            role = author.get('role', 'unknown')
+                            create_time = message.get('create_time')
+                            metadata = message.get('metadata', {})
+                            status = message.get('status')
                             
-                            if isinstance(content, dict):
-                                content_type = content.get('content_type')
-                                print(f"Content type: {content_type}")
-                                text_parts = []
-                                if content_type == 'text':
-                                    parts = content.get('parts', [])
-                                    print(f"Text parts: {parts}")
-                                    if parts and parts[0]:
-                                        text_parts.append(parts[0])
-                                elif content_type == 'multimodal_text':
-                                    parts = content.get('parts', [])
-                                    print(f"Multimodal parts: {parts}")
-                                    for part in parts:
-                                        print(f"Processing part: {part}")
-                                        if isinstance(part, dict):
-                                            part_type = part.get('content_type')
-                                            print(f"Part type: {part_type}")
-                                            if part_type == 'audio_transcription':
-                                                text = part.get('text')
-                                                print(f"Found text: {text}")
-                                                if text:
-                                                    text_parts.append(text)
-                                            elif part_type == 'text':
-                                                text = part.get('text')
-                                                print(f"Found text: {text}")
-                                                if text:
-                                                    text_parts.append(text)
-                                elif content_type == 'user_editable_context':
-                                    text = content.get('text')
-                                    print(f"Found user context text: {text}")
-                                    if text:
-                                        text_parts.append(text)
+                            # Format timestamp
+                            timestamp = ''
+                            if create_time:
+                                dt = datetime.fromtimestamp(create_time)
+                                timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
+                            
+                            # Process content
+                            content_type = content.get('content_type')
+                            text_parts = []
+                            message_type_info = []
+                            media_files = []
+                            
+                            if content_type == 'text':
+                                parts = content.get('parts', [])
+                                for part in parts:
+                                    if isinstance(part, str):
+                                        text_parts.append(part)
+                                    elif isinstance(part, dict):
+                                        text = part.get('text', '')
+                                        if text:
+                                            text_parts.append(text)
+                            
+                            elif content_type == 'multimodal_text':
+                                parts = content.get('parts', [])
+                                has_voice = False
+                                has_transcription = False
                                 
-                                if text_parts:
-                                    combined_text = ' '.join(text_parts)
-                                    f.write(f"{role}: {combined_text}\n\n")
+                                for part in parts:
+                                    if isinstance(part, dict):
+                                        part_type = part.get('content_type')
+                                        
+                                        if part_type == 'audio_transcription':
+                                            text = part.get('text', '')
+                                            if text:
+                                                text_parts.append(text)
+                                                has_transcription = True
+                                        
+                                        elif part_type == 'text':
+                                            text = part.get('text', '')
+                                            if text:
+                                                text_parts.append(text)
+                                        
+                                        elif part_type == 'real_time_user_audio_video_asset_pointer':
+                                            has_voice = True
+                                            audio_asset = part.get('audio_asset_pointer', {})
+                                            if audio_asset:
+                                                asset_id = audio_asset.get('asset_pointer')
+                                                if asset_id:
+                                                    media_files.append({
+                                                        'type': 'audio',
+                                                        'id': asset_id,
+                                                        'metadata': audio_asset.get('metadata', {})
+                                                    })
+                                
+                                if has_voice:
+                                    message_type_info.append('Voice')
+                                    if not has_transcription:
+                                        text_parts.append('[Voice message - No transcription available]')
+                            
+                            elif content_type == 'user_editable_context':
+                                text = content.get('text', '')
+                                if text:
+                                    text_parts.append(text)
+                            
+                            # Add status info
+                            if status:
+                                message_type_info.append(status.replace('_', ' ').title())
+                            
+                            # Add video indicator if present
+                            if metadata.get('real_time_audio_has_video', False):
+                                message_type_info.append('Video')
+                            
+                            # Format and write message
+                            combined_text = ' '.join(text_parts) if text_parts else '[No content]'
+                            
+                            if timestamp and role:
+                                # Format metadata badges
+                                metadata_str = ''
+                                if message_type_info:
+                                    metadata_str = ' [' + '] ['.join(message_type_info) + ']'
+                                
+                                # Write message with proper indentation
+                                f.write(f"[{timestamp}] {role.upper()}{metadata_str}:\n")
+                                f.write(f"  {combined_text}\n")
+                                
+                                # Add media file references if any
+                                if media_files:
+                                    f.write("  Media files:\n")
+                                    for media in media_files:
+                                        f.write(f"    - {media['type'].title()} file: {media['id']}\n")
+                                        if media['metadata']:
+                                            f.write(f"      Duration: {media['metadata'].get('end', 0)} seconds\n")
+                                
+                                f.write("-" * 80 + "\n")
                     
         return output_file
 
