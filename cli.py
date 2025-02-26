@@ -67,4 +67,9 @@ class CLIParser:
             action='store_true',
             help='Verify markdown files format and remove invalid files (uses directory specified by --output)'
         )
+        parser.add_argument(
+            '--chat-id',
+            type=str,
+            help='Process a single chat ID for analysis'
+        )
         return parser.parse_args()

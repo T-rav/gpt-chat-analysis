@@ -159,6 +159,31 @@ class ConversationData:
             
         return output_file
 
+    def analyze_single_chat(self, chat_id: str) -> None:
+        """Analyze a single chat conversation.
+        
+        Args:
+            chat_id: ID of the chat to analyze
+        """
+        # Load chat data
+        chat_data = self._load_chat_data()
+        
+        if chat_id not in chat_data:
+            raise ValueError(f"Chat ID {chat_id} not found in conversation data")
+            
+        # Create output directory
+        os.makedirs(self.config.research_folder, exist_ok=True)
+        
+        # Analyze the single chat
+        messages = chat_data[chat_id]
+        filepath, status = self.analyze_and_save_chat(
+            chat_id,
+            messages,
+            self.config.research_folder
+        )
+        print(f"Analysis of chat {chat_id} completed with status: {status}")
+        print(f"Results saved to: {filepath}")
+
     def analyze_and_save_chat(self, chat_id: str, messages: List[Dict[str, Any]], 
                             output_dir: str) -> Tuple[str, bool]:
         """Analyze a chat conversation and save the results to a markdown file.

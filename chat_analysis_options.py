@@ -87,11 +87,16 @@ class ChatAnalysisOptions:
             print(f"Error analyzing trends: {str(e)}")
     
     def analyze_chats(self) -> None:
-        """Run parallel analysis on all chat conversations."""
+        """Run analysis on chat conversations."""
         print(f"\nInitializing chat analysis...")
         data = ConversationData(self.config)
-        print(f"\nStarting parallel analysis...")
-        data.analyze_all_chats_parallel()
+        
+        if self.args.chat_id:
+            print(f"\nAnalyzing single chat: {self.args.chat_id}")
+            data.analyze_single_chat(self.args.chat_id)
+        else:
+            print(f"\nStarting parallel analysis of all chats...")
+            data.analyze_all_chats_parallel()
         
         print(f"\nAnalysis complete! Results saved to: {self.args.output}")
         if self.args.pdf:
