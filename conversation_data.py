@@ -208,9 +208,23 @@ class ConversationData:
             # Only create directory and write file if we have valid analysis
             if analysis:
                 os.makedirs(output_dir, exist_ok=True)
-                with open(filepath, 'w') as f:
+                
+                # Write to a temporary file first
+                temp_filepath = filepath + '.tmp'
+                with open(temp_filepath, 'w') as f:
                     f.write(analysis)
-                return filepath, True
+                
+                # Validate the format
+                from file_validator import FileValidator
+                if FileValidator.verify_md_format(temp_filepath):
+                    # If valid, rename to final filepath
+                    os.rename(temp_filepath, filepath)
+                    return filepath, True
+                else:
+                    # If invalid, delete temp file and count as skipped
+                    os.remove(temp_filepath)
+                    print(f"Skipping chat {chat_id} - generated analysis has invalid format")
+                    return filepath, False
             
             return filepath, False
             
