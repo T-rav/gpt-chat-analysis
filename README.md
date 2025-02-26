@@ -104,7 +104,7 @@ Example:
 # Assuming you downloaded to ~/Downloads/chatgpt-export.zip
 unzip ~/Downloads/chatgpt-export.zip -d ~/Downloads/chatgpt-temp
 mv ~/Downloads/chatgpt-temp/conversations chats
-mv chats /path/to/your/gpt-heatmap/
+mv chats /path/to/your/gpt-chat-analysis/
 ```
 
 Note: The export contains all your ChatGPT conversations and related media.
@@ -112,9 +112,10 @@ Note: The export contains all your ChatGPT conversations and related media.
 ## Installation
 
 1. Clone the repository:
+```
    ```bash
-   git clone https://github.com/yourusername/gpt-heatmap.git
-   cd gpt-heatmap
+   git clone https://github.com/yourusername/gpt-chat-analysis.git
+   cd gpt-chat-analysis
    ```
 
 2. Install dependencies:
