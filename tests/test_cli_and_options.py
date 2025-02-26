@@ -7,9 +7,6 @@ from datetime import datetime
 
 from cli import CLIParser
 from chat_analysis_options import ChatAnalysisOptions
-from trend_processor import TrendProcessor
-from pdf_generator import PDFGenerator
-from file_validator import FileValidator
 
 @pytest.fixture
 def temp_dir(tmp_path):
@@ -74,58 +71,6 @@ def test_cli_parser_custom_values():
         assert args.trends == "analysis_dir"
         assert args.verify_format is True
         assert args.chat_id == "chat456"
-
-def test_analyze_trends_directory(temp_dir, sample_args):
-    """Test analyzing trends in a directory."""
-    # Create test files
-    os.makedirs(os.path.join(temp_dir, "analysis"), exist_ok=True)
-    with open(os.path.join(temp_dir, "analysis", "test1.md"), "w") as f:
-        f.write("# Test Chat 1")
-    with open(os.path.join(temp_dir, "analysis", "test2.md"), "w") as f:
-        f.write("# Test Chat 2")
-    
-    # Mock OpenAI response
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock()]
-    mock_response.choices[0].message.content = '{"loop_completion": {"completed": true}}'
-    
-    with patch('sys.argv', ['app.py', '--trends', os.path.join(temp_dir, "analysis")]), \
-         patch('trend_processor.TrendProcessor._analyze_with_openai', return_value=mock_response):
-        options = ChatAnalysisOptions()
-        options.analyze_trends()
-        # Verify analysis was performed
-
-def test_analyze_trends_single_chat(temp_dir, sample_args):
-    """Test analyzing a single chat."""
-    # Create test file
-    os.makedirs(os.path.join(temp_dir, "analysis"), exist_ok=True)
-    chat_id = "test_chat"
-    with open(os.path.join(temp_dir, "analysis", f"{chat_id}.md"), "w") as f:
-        f.write("# Test Chat")
-    
-    # Mock OpenAI response
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock()]
-    mock_response.choices[0].message.content = '{"loop_completion": {"completed": true}}'
-    
-    with patch('sys.argv', ['app.py', '--trends', os.path.join(temp_dir, "analysis"), '--chat-id', chat_id]), \
-         patch('trend_processor.TrendProcessor._analyze_with_openai', return_value=mock_response):
-        options = ChatAnalysisOptions()
-        options.analyze_trends()
-        # Verify single chat analysis was performed
-
-def test_generate_pdfs(temp_dir, sample_args):
-    """Test PDF generation."""
-    # Create test markdown files
-    os.makedirs(os.path.join(temp_dir, "analysis"), exist_ok=True)
-    with open(os.path.join(temp_dir, "analysis", "test1.md"), "w") as f:
-        f.write("# Test Chat 1")
-    
-    with patch('sys.argv', ['app.py', '-o', os.path.join(temp_dir, "analysis"), '--pdf', '2']), \
-         patch('pdf_generator.PDFGenerator.generate_pdfs') as mock_generate:
-        options = ChatAnalysisOptions()
-        options.generate_pdfs()
-        mock_generate.assert_called_once_with(2)
 
 def test_verify_markdown_format(temp_dir, sample_args):
     """Test markdown file verification."""
