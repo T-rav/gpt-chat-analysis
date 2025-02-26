@@ -1,6 +1,7 @@
 """Handles loading and processing of conversation data."""
 
 import concurrent.futures
+import inspect
 import json
 import os
 from datetime import datetime
@@ -212,24 +213,87 @@ class ConversationData:
         
         # Prepare conversation for analysis
         conversation = ""
+        
+        # Check if we're in single chat mode by looking at the call stack
+        import inspect
+        caller_frame = inspect.currentframe().f_back
+        is_single_chat = caller_frame and caller_frame.f_code.co_name == 'analyze_single_chat'
+        
+        if is_single_chat:
+            print("\nDebug - Processing chat messages:")
+            print(f"Found {len(messages)} messages")
+            print("Starting message processing...")
+        
         for msg in messages:
             role = msg.get('author', {}).get('role', 'unknown')
-            content = msg.get('content', {}).get('parts', [''])[0]
-            conversation += f"{role}: {content}\n"
+            content = msg.get('content', {})
+            
+            # Get message text based on content type
+            text = None
+            content_type = content.get('content_type')
+            parts = content.get('parts', [])
+            
+            if content_type == 'text':
+                text = parts[0] if parts else None
+            elif content_type == 'multimodal_text':
+                # Combine all text parts
+                text_parts = []
+                for part in parts:
+                    if isinstance(part, dict):
+                        if part.get('content_type') in ['text', 'audio_transcription']:
+                            text_parts.append(part.get('text', ''))
+                text = ' '.join(text_parts) if text_parts else None
+            elif content_type == 'user_editable_context':
+                text = content.get('text')
+            
+            if text:
+                if is_single_chat:
+                    print(f"\nMessage:")
+                    print(f"  Role: {role}")
+                    print(f"  Type: {content_type}")
+                    print(f"  Content: {text[:200]}..." if len(text) > 200 else f"  Content: {text}")
+                conversation += f"{role}: {text}\n"
+        
+        # Print debug info before OpenAI call
+        if is_single_chat:
+            print("\nPreparing to call OpenAI API...")
+            print(f"Total conversation length: {len(conversation)} characters")
+            token_estimate = len(conversation.split()) * 1.3  # Rough estimate
+            print(f"Estimated tokens: {int(token_estimate)}")
         
         # Analyze with OpenAI
         try:
-            response = self.openai_client.chat.completions.create(
-                model=self.config.model,
-                messages=[
-                    {"role": "system", "content": self.config.system_prompt},
-                    {"role": "user", "content": conversation}
-                ],
-                temperature=self.config.temperature
-            )
+            if is_single_chat:
+                print("Calling OpenAI API...")
             
-            # Save analysis to markdown file
-            analysis = response.choices[0].message.content
+            # Set a timeout for the API call
+            import httpx
+            try:
+                with httpx.Client(timeout=60.0) as client:
+                    response = self.openai_client.chat.completions.create(
+                        model=self.config.model,
+                        messages=[
+                            {"role": "system", "content": self.config.system_prompt},
+                            {"role": "user", "content": conversation}
+                        ],
+                        temperature=self.config.temperature
+                    )
+                
+                if is_single_chat:
+                    print("OpenAI API call completed successfully")
+                
+                # Save analysis to markdown file
+                analysis = response.choices[0].message.content
+                
+            except httpx.TimeoutException:
+                print(f"Error: API call timed out after 60 seconds")
+                return filepath, 'api_error'
+            except KeyboardInterrupt:
+                print("\nOperation cancelled by user")
+                return filepath, 'cancelled'
+            except Exception as e:
+                print(f"Error during API call: {str(e)}")
+                return filepath, 'api_error'
             
             # Only create directory and write file if we have valid analysis
             if analysis:
@@ -435,13 +499,25 @@ class ConversationData:
             # Process each conversation
             for conv in conversations:
                 if not isinstance(conv, dict):
+                    print(f"Skipping non-dict conversation: {type(conv)}")
                     continue
                     
                 # Get required fields
                 chat_id = conv.get('id')
                 create_time = conv.get('create_time')
                 if not chat_id or not create_time:
+                    print(f"Skipping conversation missing id or create_time: {chat_id}")
                     continue
+                    
+                # Debug: Print more info if this is the chat we're looking for
+                caller_frame = inspect.currentframe().f_back
+                is_single_chat = caller_frame and caller_frame.f_code.co_name == 'analyze_single_chat'
+                if is_single_chat and chat_id == caller_frame.f_locals.get('chat_id'):
+                    print(f"\nFound target chat {chat_id}:")
+                    print(f"  create_time: {create_time}")
+                    print(f"  messages: {len(conv.get('messages', []))}")
+                    print(f"  mapping: {len(conv.get('mapping', {}))}")
+                    print(f"  Full conversation data: {json.dumps(conv, indent=2)}\n")
                     
                 # Filter by start date if specified
                 if self.config.start_date:
@@ -449,27 +525,73 @@ class ConversationData:
                     if create_date < self.config.start_date:
                         continue
                         
-                # Extract messages
+                # Extract messages from mapping
                 messages = []
-                for msg in conv.get('messages', []):
-                    if not isinstance(msg, dict):
-                        continue
-                        
-                    # Get message content
-                    author = msg.get('author', {})
-                    content = msg.get('content', {})
-                    if not author or not content:
-                        continue
-                        
-                    # Add to messages list
-                    messages.append({
-                        'author': author,
-                        'content': content,
-                        'create_time': msg.get('create_time', create_time)
-                    })
+                mapping = conv.get('mapping', {})
+                current_node = conv.get('current_node')
+                
+                # Debug: Print message counts if in single chat mode
+                if is_single_chat:
+                    print(f"Processing messages from mapping:")
+                    print(f"Total messages in mapping: {len(mapping)}")
+                    print(f"Current node: {current_node}")
+                
+                # Function to traverse message tree
+                def traverse_messages(node_id, visited=None):
+                    if visited is None:
+                        visited = set()
                     
-                # Sort messages by create time
-                messages.sort(key=lambda x: x.get('create_time', 0))
+                    if node_id in visited:
+                        return []
+                    visited.add(node_id)
+                    
+                    node_data = mapping.get(node_id)
+                    if not node_data:
+                        return []
+                    
+                    # Get message data
+                    message = node_data.get('message')
+                    result = []
+                    
+                    # Add parent's message first
+                    parent_id = node_data.get('parent')
+                    if parent_id:
+                        result.extend(traverse_messages(parent_id, visited))
+                    
+                    # Add current message if valid
+                    if message:
+                        author = message.get('author', {})
+                        content = message.get('content', {})
+                        metadata = message.get('metadata', {})
+                        
+                        # Skip system messages and hidden messages
+                        if (author.get('role') != 'system' and 
+                            not metadata.get('is_visually_hidden_from_conversation', False)):
+                            
+                            parts = content.get('parts', [])
+                            if parts and parts[0]:
+                                if is_single_chat:
+                                    print(f"\nIncluding message {node_id}:")
+                                    print(f"  role: {author.get('role')}")
+                                    print(f"  content: {parts[0][:100]}..." if len(parts[0]) > 100 else f"  content: {parts[0]}")
+                                result.append({
+                                    'author': author,
+                                    'content': content,
+                                    'create_time': message.get('create_time', create_time)
+                                })
+                            elif is_single_chat:
+                                print(f"Skipping message {node_id} - empty content")
+                        elif is_single_chat:
+                            print(f"Skipping message {node_id} - system or hidden message")
+                    
+                    return result
+                
+                # Start traversal from current node
+                if current_node:
+                    messages = traverse_messages(current_node)
+                    if is_single_chat:
+                        print(f"\nFound {len(messages)} messages in conversation")
+                
                 chats[chat_id] = messages
                 
             print(f"\nLoaded {len(chats)} valid conversations")
