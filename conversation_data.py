@@ -176,13 +176,13 @@ class ConversationData:
         # Skip if file already exists
         if os.path.exists(filepath):
             print(f"Skipping chat {chat_id} - analysis already exists")
-            return filepath, False
+            return filepath, 'skipped'
             
         # Estimate token count (rough heuristic)
         estimated_tokens = sum(len(str(msg)) / 4 for msg in messages)
         if estimated_tokens > 32000:  # OpenAI's max context
             print(f"Skipping chat {chat_id} - estimated {int(estimated_tokens)} tokens exceeds limit")
-            return filepath, False
+            return filepath, 'skipped'
             
         # Prepare conversation for analysis
         conversation = ""
@@ -219,19 +219,19 @@ class ConversationData:
                 if FileValidator.verify_md_format(temp_filepath):
                     # If valid, rename to final filepath
                     os.rename(temp_filepath, filepath)
-                    return filepath, True
+                    return filepath, 'success'
                 else:
-                    # If invalid, delete temp file and count as skipped
+                    # If invalid, delete temp file and count as format error
                     os.remove(temp_filepath)
-                    print(f"Skipping chat {chat_id} - generated analysis has invalid format")
-                    return filepath, False
+                    print(f"Format error in chat {chat_id} - generated analysis has invalid format")
+                    return filepath, 'format_error'
             
-            return filepath, False
+            return filepath, 'api_error'
             
         except Exception as e:
             print(f"Error analyzing chat {chat_id}: {str(e)}")
             # Don't create the file if analysis failed
-            return os.path.join(output_dir, f"{chat_id}.md"), False
+            return os.path.join(output_dir, f"{chat_id}.md"), 'api_error'
 
     def analyze_all_chats_parallel(self) -> None:
         """Analyze all chat conversations in parallel."""
@@ -254,12 +254,30 @@ class ConversationData:
             # Process results as they complete
             completed = 0
             successful = 0
+            skipped = 0
+            format_errors = 0
+            api_errors = 0
+            
             for future in concurrent.futures.as_completed(futures):
                 completed += 1
-                if future.result()[1]:
+                _, status = future.result()
+                
+                if status == 'success':
                     successful += 1
+                elif status == 'skipped':
+                    skipped += 1
+                elif status == 'format_error':
+                    format_errors += 1
+                elif status == 'api_error':
+                    api_errors += 1
+                    
                 print(f"\rProgress: {completed}/{len(futures)} chats processed", end='')
+                
             print(f"\nCompleted! {successful}/{len(futures)} chats analyzed successfully")
+            print(f"Skipped: {skipped} chats (already exist or too large)")
+            print(f"Failed due to format errors: {format_errors} chats")
+            print(f"Failed due to API errors: {api_errors} chats")
+            print(f"Total failed: {format_errors + api_errors} chats")
 
         # Generate PDFs if requested
         if self.config.pdf_chunks:
