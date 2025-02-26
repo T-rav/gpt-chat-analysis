@@ -37,6 +37,26 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
   - Pattern identification
   - Recommendations for improvement
 
+### Chat Export
+- Export individual chat histories in multiple formats:
+  - Text format with clear role separation
+  - Markdown format with headers and separators
+  - JSON format for full conversation data
+- Automatically timestamped output files
+- Exports stored in dedicated 'exports' directory
+
+Example:
+```bash
+# Export a chat in text format
+python app.py --export-chat <conversation_id> --export-format txt
+
+# Export in markdown format
+python app.py --export-chat <conversation_id> --export-format md
+
+# Export raw conversation data
+python app.py --export-chat <conversation_id> --export-format json
+```
+
 ### PDF Generation
 - Automatically converts markdown reports to PDFs
 - Manages file size by splitting into multiple PDFs if needed

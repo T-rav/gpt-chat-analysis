@@ -62,6 +62,57 @@ class ConversationData:
         self.conversations = self._load_conversations()
         self.convo_times = self._process_timestamps()
         
+    def export_chat_history(self, conversation_id: str, output_format: str = 'txt') -> str:
+        """Export chat history for a specific conversation ID to a file.
+        
+        Args:
+            conversation_id: ID of the conversation to export
+            output_format: Format to export ('json', 'txt', or 'md')
+            
+        Returns:
+            str: Path to the exported file
+            
+        Raises:
+            ValueError: If conversation ID not found
+        """
+        # Find the conversation
+        conversation = None
+        for conv in self.conversations:
+            if conv.get('conversation_id') == conversation_id:
+                conversation = conv
+                break
+                
+        if not conversation:
+            raise ValueError(f"Conversation ID not found: {conversation_id}")
+            
+        # Create output filename
+        timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+        output_dir = Path('exports')
+        output_dir.mkdir(exist_ok=True)
+        output_file = output_dir / f"chat_{conversation_id}_{timestamp}.{output_format}"
+        
+        # Export based on format
+        if output_format == 'json':
+            with open(output_file, 'w') as f:
+                json.dump(conversation, f, indent=2)
+                
+        elif output_format in ('txt', 'md'):
+            with open(output_file, 'w') as f:
+                f.write(f"Chat History for Conversation {conversation_id}\n")
+                f.write(f"Exported at: {timestamp}\n\n")
+                
+                for msg in conversation.get('messages', []):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    
+                    if output_format == 'md':
+                        f.write(f"### {role.title()}\n\n{content}\n\n---\n\n")
+                    else:  # txt
+                        f.write(f"[{role.upper()}]\n{content}\n\n")
+                        
+        print(f"\nExported chat history to: {output_file}")
+        return str(output_file)
+
     def _load_conversations(self) -> List[Dict]:
         """Load conversations from JSON files with validation and error handling."""
         def validate_conversation(conv: Dict) -> bool:

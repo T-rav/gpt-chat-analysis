@@ -45,4 +45,16 @@ class CLIParser:
             type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
             help='Start date for analysis (format: YYYY-MM-DD)'
         )
+        parser.add_argument(
+            '--export-chat',
+            type=str,
+            help='Export chat history for a specific conversation ID to a file'
+        )
+        parser.add_argument(
+            '--export-format',
+            type=str,
+            choices=['json', 'txt', 'md'],
+            default='txt',
+            help='Format for chat export (default: txt)'
+        )
         return parser.parse_args()
