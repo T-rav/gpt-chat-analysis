@@ -99,8 +99,36 @@ python app.py -o analysis
 
 # Analyze a single conversation's markdown file (useful for debugging)
 python app.py --trends analysis/ --chat-id <conversation-id>
-# OR using analyise a single chat session
+
+# OR analyze a single chat session
 python app.py -o analysis --chat-id <conversation-id>
+```
+
+## Testing
+
+The project uses pytest for testing. Tests are organized into separate files by functionality:
+- `test_cli_and_options.py`: Tests for CLI argument parsing
+- `test_conversation_analysis.py`: Tests for chat analysis functionality
+- `test_conversation_export.py`: Tests for chat export features
+- `test_file_validation.py`: Tests for markdown file validation
+- `test_pdf_generation.py`: Tests for PDF generation
+- `test_trend_analysis.py`: Tests for trend analysis
+
+To run the tests:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run tests with output
+python -m pytest -v tests/
+
+# Run a specific test file
+python -m pytest tests/test_conversation_analysis.py
+
+# Run a specific test
+python -m pytest tests/test_conversation_analysis.py::test_analyze_chat
+```
 
 ---
 
