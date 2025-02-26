@@ -78,7 +78,8 @@ class ConversationData:
         # Find the conversation
         conversation = None
         for conv in self.conversations:
-            if conv.get('conversation_id') == conversation_id:
+            # Check both 'id' and 'conversation_id' fields
+            if conv.get('id') == conversation_id or conv.get('conversation_id') == conversation_id:
                 conversation = conv
                 break
                 
@@ -99,16 +100,40 @@ class ConversationData:
         elif output_format in ('txt', 'md'):
             with open(output_file, 'w') as f:
                 f.write(f"Chat History for Conversation {conversation_id}\n")
-                f.write(f"Exported at: {timestamp}\n\n")
+                f.write(f"Exported at: {timestamp}\n")
                 
-                for msg in conversation.get('messages', []):
-                    role = msg.get('role', 'unknown')
-                    content = msg.get('content', '')
+                # Extract messages from mapping
+                mapping = conversation.get('mapping', {})
+                messages = []
+                
+                # Traverse the message tree from current node
+                current_node = conversation.get('current_node')
+                while current_node and current_node in mapping:
+                    node = mapping[current_node]
+                    message = node.get('message', {})
+                    if message:
+                        messages.insert(0, message)  # Insert at beginning to maintain order
+                    current_node = node.get('parent')  # Move to parent node
+                    
+                # Write number of non-empty messages
+                non_empty_count = len([m for m in messages 
+                                     if m.get('content', {}).get('parts', [''])[0].strip() 
+                                     and m.get('author', {}).get('role', '').strip()])
+                f.write(f"Number of messages: {non_empty_count}\n\n")
+                
+                # Write messages in chronological order
+                for msg in messages:
+                    role = msg.get('author', {}).get('role', 'unknown')
+                    content = msg.get('content', {}).get('parts', [''])[0]
+                    
+                    # Skip empty messages or messages with empty roles
+                    if not content.strip() or not role.strip():
+                        continue
                     
                     if output_format == 'md':
                         f.write(f"### {role.title()}\n\n{content}\n\n---\n\n")
                     else:  # txt
-                        f.write(f"[{role.upper()}]\n{content}\n\n")
+                        f.write(f"[{role.upper()}]\n{content}\n\n---\n")
                         
         print(f"\nExported chat history to: {output_file}")
         return str(output_file)
@@ -455,6 +480,14 @@ def main() -> None:
             start_date=args.date
         )
         
+        # Handle chat export if requested
+        if args.export_chat:
+            print(f"\nExporting chat {args.export_chat}...")
+            data = ConversationData(config)
+            output_file = data.export_chat_history(args.export_chat, args.export_format)
+            print(f"Chat exported to: {output_file}")
+            return
+            
         # Skip analysis if only PDF generation is requested
         if args.pdf:
             print(f"\nGenerating {args.pdf} PDF files from existing markdown...")
