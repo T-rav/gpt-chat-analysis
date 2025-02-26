@@ -66,21 +66,23 @@ class TrendProcessor:
         
         # Check for cached results
         if not self._should_process_file(filepath):
-            print(f"Using cached analysis for {filename}")
             json_path = os.path.join(
                 self.output_dir,
                 os.path.splitext(filename)[0] + '.json'
             )
             with open(json_path, 'r') as f:
-                return json.load(f)
+                stats = json.load(f)
+                stats['cached'] = True
+                return stats
         
         # Process file if no cache available
         stats = self._process_file(filepath)
+        stats['cached'] = False
         
-        # Print result
+        # Print result if not cached
         status = "✓" if stats['completed'] == 1 else "✗"
         exit_info = f" (Exit: {stats['exit_step']})" if not stats['completed'] else ""
-        print(f"{filename}: {status}{exit_info}")
+        print(f"\n{filename}: {status}{exit_info}")
         
         return stats
 
@@ -109,10 +111,15 @@ class TrendProcessor:
             print("No markdown files found to analyze")
             return {}
         
-        print(f"\nAnalyzing {len(md_files)} files in parallel:")
+        total_files = len(md_files)
+        print(f"\nFound {total_files} files to process")
         
         # Process files in parallel
         stats_list = []
+        processed = 0
+        cached = 0
+        errors = 0
+        
         max_workers = min(mp.cpu_count(), len(md_files))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_file = {
@@ -124,10 +131,19 @@ class TrendProcessor:
                 try:
                     stats = future.result()
                     stats_list.append(stats)
+                    processed += 1
+                    if 'cached' in stats and stats['cached']:
+                        cached += 1
+                    
+                    # Print progress
+                    print(f"Progress: {processed}/{total_files} files ({cached} cached)", end='\r')
                 except Exception as e:
                     file = future_to_file[future]
-                    print(f"Error processing {os.path.basename(file)}: {str(e)}")
+                    print(f"\nError processing {os.path.basename(file)}: {str(e)}")
+                    errors += 1
         
+        # Print final stats
+        print(f"\nCompleted: {processed} files processed ({cached} from cache, {errors} errors)")
         return self._generate_summary(stats_list)
     
     def _analyze_with_openai(self, text: str, filename: str) -> Dict[str, Any]:
