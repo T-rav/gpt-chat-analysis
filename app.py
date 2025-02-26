@@ -26,6 +26,57 @@ from cli import CLIParser
 from configuration import Config
 from pdf_generator import PDFGenerator
 
+def analyze_md_files(directory):
+    """Analyze markdown files in the specified directory for loop completion.
+    
+    Args:
+        directory (str): Path to directory containing markdown files
+        
+    Returns:
+        dict: Analysis summary with completion statistics
+    """
+    # Regular expression pattern to identify Loop Completion Analysis sections
+    completion_pattern = re.compile(
+        r"### 4\.1 Loop Completion Analysis\n- \*\*Did the USER complete all five steps of the AI Decision Loop\?\*\*\n\s*-\s*(Yes|No)", 
+        re.IGNORECASE
+    )
+
+    # Initialize counters
+    total_chats = 0
+    completed_loops = 0
+    not_completed_loops = 0
+
+    # Check if the directory exists
+    if not os.path.isdir(directory):
+        raise FileNotFoundError(f"The directory '{directory}' does not exist.")
+
+    # Scan all markdown files in the directory
+    for filename in os.listdir(directory):
+        if filename.endswith(".md"):
+            file_path = os.path.join(directory, filename)
+
+            with open(file_path, "r", encoding="utf-8") as file:
+                md_text = file.read()
+
+            # Extract "Loop Completion Analysis" sections
+            loop_completion_sections = completion_pattern.findall(md_text)
+
+            # Update global counters
+            total_chats += len(loop_completion_sections)
+            completed_loops += sum(1 for result in loop_completion_sections if result.lower() == "yes")
+            not_completed_loops += sum(1 for result in loop_completion_sections if result.lower() == "no")
+
+    # Calculate percentages
+    completed_percentage = (completed_loops / total_chats) * 100 if total_chats > 0 else 0
+    not_completed_percentage = (not_completed_loops / total_chats) * 100 if total_chats > 0 else 0
+
+    # Return summary results
+    return {
+        "Total Chats Analyzed": total_chats,
+        "Completed Loop (%)": completed_percentage,
+        "Not Completed Loop (%)": not_completed_percentage,
+    }
+
 class ConversationData:
     """Handles loading, processing, and analyzing chat conversations.
     
@@ -497,6 +548,21 @@ def main() -> None:
                 size_limit_mb=config.pdf_size_limit_mb
             )
             pdf_gen.generate_pdfs(args.pdf)
+            return
+            
+        # Run analysis on markdown files if requested
+        if args.analyze:
+            print(f"\nAnalyzing markdown files in: {args.analyze}")
+            try:
+                summary = analyze_md_files(args.analyze)
+                print("\nAnalysis Summary:")
+                for key, value in summary.items():
+                    if isinstance(value, float):
+                        print(f"{key}: {value:.2f}")
+                    else:
+                        print(f"{key}: {value}")
+            except Exception as e:
+                print(f"Error during analysis: {str(e)}")
             return
             
         # Process conversations and run analysis

@@ -57,4 +57,9 @@ class CLIParser:
             default='txt',
             help='Format for chat export (default: txt)'
         )
+        parser.add_argument(
+            '--analyze',
+            type=str,
+            help='Run analysis on markdown files in the specified directory'
+        )
         return parser.parse_args()
