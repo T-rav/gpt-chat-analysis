@@ -261,22 +261,89 @@ class ConversationData:
         Returns:
             Path to the exported file
         """
-        chats = self._load_chat_data()
-        if chat_id not in chats:
+        # Create exports directory if it doesn't exist
+        exports_dir = os.path.join(os.path.dirname(self.config.research_folder), 'exports')
+        os.makedirs(exports_dir, exist_ok=True)
+        
+        # Load the conversation file
+        conversations_file = os.path.join(self.config.convo_folder, 'conversations.json')
+        if not os.path.exists(conversations_file):
+            raise ValueError(f"No conversations.json found in {self.config.convo_folder}")
+            
+        with open(conversations_file, 'r') as f:
+            conversations = json.load(f)
+            
+        print(f"Found {len(conversations)} conversations")
+        # Find the target conversation
+        target_conv = None
+        for conv in conversations:
+            if isinstance(conv, dict):
+                conv_id = conv.get('id')
+                print(f"Checking conversation {conv_id}")
+                if conv_id == chat_id:
+                    target_conv = conv
+                    print(f"Found target conversation with ID {chat_id}")
+                    break
+                
+        if not target_conv:
             raise ValueError(f"Chat {chat_id} not found")
             
-        messages = chats[chat_id]
+        # Export in requested format
         if format == 'json':
-            output_file = os.path.join(self.config.research_folder, f"{chat_id}.json")
+            output_file = os.path.join(exports_dir, f"{chat_id}.json")
             with open(output_file, 'w') as f:
-                json.dump(messages, f, indent=2)
+                json.dump(target_conv, f, indent=2)
         else:
-            output_file = os.path.join(self.config.research_folder, f"{chat_id}.txt")
+            output_file = os.path.join(exports_dir, f"{chat_id}.txt")
             with open(output_file, 'w') as f:
-                for msg in messages:
-                    role = msg.get('author', {}).get('role', 'unknown')
-                    content = msg.get('content', {}).get('parts', [''])[0]
-                    f.write(f"{role}: {content}\n\n")
+                mapping = target_conv.get('mapping', {})
+                print(f"Found {len(mapping)} messages in mapping")
+                for msg_id, msg_data in mapping.items():
+                    print(f"\nProcessing message {msg_id}")
+                    print(f"Full message data: {msg_data}")
+                    if isinstance(msg_data, dict) and 'message' in msg_data:
+                        message = msg_data['message']
+                        if isinstance(message, dict):
+                            content = message.get('content')
+                            role = message.get('author', {}).get('role', 'unknown')
+                            print(f"Role: {role}")
+                            
+                            if isinstance(content, dict):
+                                content_type = content.get('content_type')
+                                print(f"Content type: {content_type}")
+                                text_parts = []
+                                if content_type == 'text':
+                                    parts = content.get('parts', [])
+                                    print(f"Text parts: {parts}")
+                                    if parts and parts[0]:
+                                        text_parts.append(parts[0])
+                                elif content_type == 'multimodal_text':
+                                    parts = content.get('parts', [])
+                                    print(f"Multimodal parts: {parts}")
+                                    for part in parts:
+                                        print(f"Processing part: {part}")
+                                        if isinstance(part, dict):
+                                            part_type = part.get('content_type')
+                                            print(f"Part type: {part_type}")
+                                            if part_type == 'audio_transcription':
+                                                text = part.get('text')
+                                                print(f"Found text: {text}")
+                                                if text:
+                                                    text_parts.append(text)
+                                            elif part_type == 'text':
+                                                text = part.get('text')
+                                                print(f"Found text: {text}")
+                                                if text:
+                                                    text_parts.append(text)
+                                elif content_type == 'user_editable_context':
+                                    text = content.get('text')
+                                    print(f"Found user context text: {text}")
+                                    if text:
+                                        text_parts.append(text)
+                                
+                                if text_parts:
+                                    combined_text = ' '.join(text_parts)
+                                    f.write(f"{role}: {combined_text}\n\n")
                     
         return output_file
 
