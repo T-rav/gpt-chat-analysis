@@ -256,17 +256,11 @@ class ConversationData:
         
         Args:
             chat_id: ID of the chat to export
-            format: Output format ('json', 'txt', or 'md')
+            format: Output format ('json' or 'txt'). Any non-JSON format will be exported as TXT.
             
         Returns:
             Path to the exported file
-            
-        Raises:
-            ValueError: If format is not one of 'json', 'txt', or 'md'
         """
-        # Validate format
-        if format not in ['json', 'txt', 'md']:
-            raise ValueError(f"Invalid export format: {format}. Must be one of: json, txt, md")
         # Create exports directory if it doesn't exist
         exports_dir = os.path.join(os.path.dirname(self.config.research_folder), 'exports')
         os.makedirs(exports_dir, exist_ok=True)
