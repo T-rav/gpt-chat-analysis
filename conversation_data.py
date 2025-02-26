@@ -204,14 +204,20 @@ class ConversationData:
             
             # Save analysis to markdown file
             analysis = response.choices[0].message.content
-            os.makedirs(output_dir, exist_ok=True)
-            with open(filepath, 'w') as f:
-                f.write(analysis)
-            return filepath, True
+            
+            # Only create directory and write file if we have valid analysis
+            if analysis:
+                os.makedirs(output_dir, exist_ok=True)
+                with open(filepath, 'w') as f:
+                    f.write(analysis)
+                return filepath, True
+            
+            return filepath, False
             
         except Exception as e:
             print(f"Error analyzing chat {chat_id}: {str(e)}")
-            return filepath, False
+            # Don't create the file if analysis failed
+            return os.path.join(output_dir, f"{chat_id}.md"), False
 
     def analyze_all_chats_parallel(self) -> None:
         """Analyze all chat conversations in parallel."""
