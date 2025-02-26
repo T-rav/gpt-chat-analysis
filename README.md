@@ -92,12 +92,15 @@ python app.py --pdf-size-limit 4
 - Analyze single conversations with `--chat-id` for debugging.
 
 ```bash
-# Analyze all conversations
+# Analyze all conversations in a directory
+python app.py --trends analysis/
+# OR using the original format
 python app.py -o analysis
 
-# Analyze a single conversation (useful for debugging)
+# Analyze a single conversation's markdown file (useful for debugging)
+python app.py --trends analysis/ --chat-id <conversation-id>
+# OR using analyise a single chat session
 python app.py -o analysis --chat-id <conversation-id>
-```
 
 ---
 

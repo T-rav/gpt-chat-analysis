@@ -11,8 +11,12 @@ class TrendProcessor:
     3. Generating statistical summaries
     """
     
-    def __init__(self):
-        """Initialize the analysis processor with OpenAI client."""
+    def __init__(self, output_dir: str = 'analysis'):
+        """Initialize the analysis processor with OpenAI client.
+        
+        Args:
+            output_dir (str): Directory to save analysis JSON files (default: 'analysis')
+        """
         config = Config()
         if not config.openai_api_key:
             raise ValueError("OpenAI API key not found in environment variables")
@@ -20,6 +24,10 @@ class TrendProcessor:
         self.client = OpenAI(api_key=config.openai_api_key)
         self.model = config.model
         self.temperature = config.temperature
+        self.output_dir = output_dir
+        
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
     
     def analyze_directory(self, directory):
         """Analyze markdown files in the specified directory for loop completion.
@@ -35,10 +43,8 @@ class TrendProcessor:
         """
         if not os.path.isdir(directory):
             raise FileNotFoundError(f"The directory '{directory}' does not exist.")
-            
-        total_chats = 0
-        completed_loops = 0
-        not_completed_loops = 0
+        
+        stats_list = []
         
         # Process each markdown file
         print("\nAnalyzing files:")
@@ -46,78 +52,209 @@ class TrendProcessor:
             if filename.endswith(".md"):
                 filepath = os.path.join(directory, filename)
                 stats = self._process_file(filepath)
-                total_chats += stats['total']
-                completed_loops += stats['completed']
-                not_completed_loops += stats['not_completed']
+                stats_list.append(stats)
                 
                 # Print per-file results
                 status = "✓" if stats['completed'] == 1 else "✗"
-                print(f"{status} {filename}")
+                exit_info = f" (Exit: {stats['exit_step']})" if not stats['completed'] else ""
+                print(f"Result: {status}{exit_info}")
         
-        return self._generate_summary(total_chats, completed_loops, not_completed_loops)
+        return self._generate_summary(stats_list)
     
-    def _analyze_with_openai(self, text: str) -> Dict[str, Any]:
-        """Analyze text using OpenAI to determine loop completion.
+    def _analyze_with_openai(self, text: str, filename: str) -> Dict[str, Any]:
+        """Analyze text using OpenAI to determine loop completion and patterns.
         
         Args:
             text (str): The conversation text to analyze
+            filename (str): Name of file being analyzed, for logging
             
         Returns:
-            dict: Analysis results indicating if loop was completed
+            dict: Detailed analysis of the AI Decision Loop execution
         """
-        prompt = (
-            "Analyze the following conversation and determine if the user completed all five steps "
-            "of the AI Decision Loop. Look for evidence of: 1) Problem Framing, 2) Solution Design, "
-            "3) Implementation, 4) Testing & Validation, and 5) Iteration & Refinement.\n\n"
-            "Respond with only 'yes' or 'no'.\n\nConversation:\n"
-            f"{text}"
+        system_prompt = (
+            "You are an expert analyst evaluating AI conversations. Your task is to analyze the chat summary "
+            "and determine:\n\n"
+            "1. How Often Was the Full AI Decision Loop Followed?\n"
+            "   - Did the user complete a loop?\n"
+            "   - If the user did not complete the loop did they exit after the first step?\n"
+            "   - If the loop was iterated was critical validation skipped?\n\n"
+            "2. Where Does the Loop Break Down?\n"
+            "   - If the loop was not completed and user make it past step 1 what step did they exit at?\n"
+            "   - Failure reason if loop not completed.\n\n"
+            "3. Insights\n"
+            "   - Did the user apply any novel patterns?\n"
+            "   - Did the user use AI as a partner in thought?\n\n"
+            "You MUST respond with a JSON object in EXACTLY this format:\n"
+            "{\n"
+            "  'loop_completion': {\n"
+            "    'completed': boolean,\n"
+            "    'exit_at_step_one': boolean,\n"
+            "    'skipped_validation': boolean\n"
+            "  },\n"
+            "  'breakdown': {\n"
+            "    'exit_step': string,  // must be one of: 'none', 'problem_framing', 'solution_design', 'implementation', 'testing_validation', 'iteration'\n"
+            "    'failure_reason': string  // brief explanation if not completed, 'none' if completed\n"
+            "  },\n"
+            "  'insights': {\n"
+            "    'novel_patterns': boolean,\n"
+            "    'ai_partnership': boolean\n"
+            "  }\n"
+            "}\n\n"
+            "DO NOT include any other text in your response, ONLY the JSON object."
         )
         
+        user_prompt = f"Analyze this conversation and return ONLY a JSON object according to the specified format:\n\n{text}"
+        
+        print(f"  Sending to OpenAI ({self.model})...")
         response = self.client.chat.completions.create(
             model=self.model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             temperature=self.temperature
         )
         
-        result = response.choices[0].message.content.strip().lower()
-        return {'completed': result == 'yes', 'not_completed': result == 'no'}
+        try:
+            result = response.choices[0].message.content.strip()
+            print(f"  OpenAI response: {result}")
+            
+            # Clean the response - remove markdown code blocks if present
+            if result.startswith('```'):
+                # Find the first and last ``` and extract content between them
+                start = result.find('\n', result.find('```')) + 1
+                end = result.rfind('```')
+                result = result[start:end].strip()
+                
+                # If it had a json tag at the start, remove that too
+                if result.startswith('json\n'):
+                    result = result[5:].strip()
+            
+            # Handle simple yes/no responses
+            if result.lower() in ['yes', 'no']:
+                is_completed = result.lower() == 'yes'
+                analysis = {
+                    'loop_completion': {
+                        'completed': is_completed,
+                        'exit_at_step_one': not is_completed,
+                        'skipped_validation': False
+                    },
+                    'breakdown': {
+                        'exit_step': 'none' if is_completed else 'step_1',
+                        'failure_reason': 'none' if is_completed else 'Insufficient information for detailed analysis'
+                    },
+                    'insights': {
+                        'novel_patterns': False,
+                        'ai_partnership': False
+                    }
+                }
+            else:
+                # Try to parse as JSON
+                import json
+                analysis = json.loads(result)
+            
+            # Save the analysis
+            json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
+            with open(json_filename, 'w') as f:
+                json.dump(analysis, f, indent=2)
+            print(f"  Analysis saved to: {json_filename}")
+            
+            return analysis
+        except Exception as e:
+            print(f"  Warning: Error processing OpenAI response for {filename}: {str(e)}")
+            default_analysis = {
+                'loop_completion': {'completed': False, 'exit_at_step_one': True, 'skipped_validation': False},
+                'breakdown': {'exit_step': 'unknown', 'failure_reason': 'Failed to parse analysis'},
+                'insights': {'novel_patterns': False, 'ai_partnership': False}
+            }
+            
+            # Save the default analysis for failed cases
+            json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
+            with open(json_filename, 'w') as f:
+                json.dump(default_analysis, f, indent=2)
+            print(f"  Default analysis saved to: {json_filename}")
+            
+            return default_analysis
 
-    def _process_file(self, file_path: str) -> Dict[str, int]:
+    def _process_file(self, file_path: str) -> Dict[str, Any]:
         """Process a single markdown file and extract completion statistics.
         
         Args:
             file_path (str): Path to the markdown file
             
         Returns:
-            dict: Statistics for the file including total, completed, and not completed loops
+            dict: Detailed statistics about the conversation
         """
+        filename = os.path.basename(file_path)
+        print(f"\nProcessing {filename}:")
+        
         with open(file_path, "r", encoding="utf-8") as file:
             md_text = file.read()
         
-        analysis = self._analyze_with_openai(md_text)
+        analysis = self._analyze_with_openai(md_text, filename)
+        
+        # Extract the summary section if it exists
+        import re
+        summary_match = re.search(r'# 1\. Brief Summary\n(.+?)\n#', md_text, re.DOTALL)
+        summary_text = summary_match.group(1).strip() if summary_match else md_text
+        
+        # Get the analysis results
+        completion = analysis['loop_completion']
+        breakdown = analysis['breakdown']
+        insights = analysis['insights']
         
         return {
-            'total': 1,  # Each file represents one conversation
-            'completed': 1 if analysis['completed'] else 0,
-            'not_completed': 1 if analysis['not_completed'] else 0
+            'total': 1,
+            'completed': 1 if completion['completed'] else 0,
+            'exit_at_step_one': 1 if completion['exit_at_step_one'] else 0,
+            'skipped_validation': 1 if completion['skipped_validation'] else 0,
+            'exit_step': breakdown['exit_step'],
+            'failure_reason': breakdown['failure_reason'],
+            'novel_patterns': 1 if insights['novel_patterns'] else 0,
+            'ai_partnership': 1 if insights['ai_partnership'] else 0
         }
     
-    def _generate_summary(self, total_chats, completed_loops, not_completed_loops):
+    def _generate_summary(self, stats_list):
         """Generate a summary of the analysis results.
         
         Args:
-            total_chats (int): Total number of chats analyzed
-            completed_loops (int): Number of completed loops
-            not_completed_loops (int): Number of not completed loops
+            stats_list (list): List of statistics dictionaries from processed files
             
         Returns:
-            dict: Summary statistics including percentages
+            dict: Aggregated statistics and insights
         """
-        completed_percentage = (completed_loops / total_chats) * 100 if total_chats > 0 else 0
-        not_completed_percentage = (not_completed_loops / total_chats) * 100 if total_chats > 0 else 0
+        total_chats = len(stats_list)
+        if total_chats == 0:
+            return {"Total Chats Analyzed": 0}
+            
+        # Initialize counters
+        completed = sum(s['completed'] for s in stats_list)
+        exit_at_step_one = sum(s['exit_at_step_one'] for s in stats_list)
+        skipped_validation = sum(s['skipped_validation'] for s in stats_list)
+        novel_patterns = sum(s['novel_patterns'] for s in stats_list)
+        ai_partnership = sum(s['ai_partnership'] for s in stats_list)
+        
+        # Count exit steps
+        exit_steps = {}
+        failure_reasons = {}
+        for s in stats_list:
+            if not s['completed']:
+                exit_steps[s['exit_step']] = exit_steps.get(s['exit_step'], 0) + 1
+                failure_reasons[s['failure_reason']] = failure_reasons.get(s['failure_reason'], 0) + 1
         
         return {
             "Total Chats Analyzed": total_chats,
-            "Completed Loop (%)": completed_percentage,
-            "Not Completed Loop (%)": not_completed_percentage,
+            "Loop Completion": {
+                "Completed (%)": (completed / total_chats) * 100,
+                "Exit at Step One (%)": (exit_at_step_one / total_chats) * 100,
+                "Skipped Validation (%)": (skipped_validation / total_chats) * 100
+            },
+            "Breakdown": {
+                "Exit Steps": exit_steps,
+                "Failure Reasons": failure_reasons
+            },
+            "Insights": {
+                "Novel Patterns (%)": (novel_patterns / total_chats) * 100,
+                "AI Partnership (%)": (ai_partnership / total_chats) * 100
+            }
         }

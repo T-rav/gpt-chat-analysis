@@ -72,17 +72,44 @@ class ChatAnalysisOptions:
             print(f"Error during verification: {str(e)}")
 
     def analyze_trends(self) -> None:
-        """Analyze trends in markdown files from the specified directory."""
-        print(f"\nAnalyzing trends in: {self.args.trends}")
+        """Analyze trends in markdown files from the specified directory or single chat."""
         try:
-            analyzer = TrendProcessor()
-            summary = analyzer.analyze_directory(self.args.trends)
-            print("\nTrends Summary:")
-            for key, value in summary.items():
-                if isinstance(value, float):
-                    print(f"{key}: {value:.2f}")
-                else:
-                    print(f"{key}: {value}")
+            # Use the output directory from config for JSON analysis files
+            analyzer = TrendProcessor(output_dir=self.config.research_folder)
+            
+            # Determine the analysis directory (either from --trends or -o)
+            analysis_dir = self.args.trends if self.args.trends else self.args.output
+            
+            if self.args.chat_id:
+                # Single chat analysis
+                target_file = os.path.join(analysis_dir, f"{self.args.chat_id}.md")
+                if not os.path.isfile(target_file):
+                    raise FileNotFoundError(f"Chat file not found: {target_file}")
+                    
+                print(f"\nAnalyzing single chat: {self.args.chat_id}")
+                stats = analyzer._process_file(target_file)
+                print("\nAnalysis Results:")
+                for key, value in stats.items():
+                    print(f"  {key}: {value}")
+                    
+            elif analysis_dir:
+                # Full directory analysis
+                print(f"\nAnalyzing trends in: {analysis_dir}")
+                summary = analyzer.analyze_directory(analysis_dir)
+                
+                print("\nTrends Summary:")
+                for section, data in summary.items():
+                    print(f"\n{section}:")
+                    if isinstance(data, dict):
+                        for key, value in data.items():
+                            if isinstance(value, float):
+                                print(f"  {key}: {value:.2f}")
+                            else:
+                                print(f"  {key}: {value}")
+                    else:
+                        print(f"  {data}")
+            else:
+                print("Error: Must specify either --trends or -o for analysis directory")
         except Exception as e:
             print(f"Error analyzing trends: {str(e)}")
     
