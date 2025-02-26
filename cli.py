@@ -62,4 +62,9 @@ class CLIParser:
             type=str,
             help='Run analysis on markdown files in the specified directory'
         )
+        parser.add_argument(
+            '--verify-format',
+            action='store_true',
+            help='Verify markdown files format and remove invalid files (uses directory specified by --output)'
+        )
         return parser.parse_args()

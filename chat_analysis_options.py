@@ -54,6 +54,23 @@ class ChatAnalysisOptions:
         )
         pdf_gen.generate_pdfs(self.args.pdf)
     
+    def verify_markdown_format(self) -> None:
+        """Verify and clean markdown files in the analysis directory."""
+        from file_validator import FileValidator
+        directory = self.args.output
+        print(f"\nVerifying markdown files in: {directory}")
+        try:
+            invalid_files, total_invalid = FileValidator.verify_and_clean_md_files(directory)
+            if invalid_files:
+                print(f"\nFound {total_invalid} invalid files:")
+                for file in invalid_files:
+                    print(f"  - {file}")
+                print(f"All invalid files have been removed from {directory}")
+            else:
+                print("All markdown files have valid format")
+        except Exception as e:
+            print(f"Error during verification: {str(e)}")
+
     def analyze_markdown_files(self) -> None:
         """Analyze markdown files in the specified directory."""
         print(f"\nAnalyzing markdown files in: {self.args.analyze}")
@@ -83,13 +100,15 @@ class ChatAnalysisOptions:
     def run(self) -> None:
         """Run the chat analysis application."""
         try:
+            if self.args.verify_format:
+                self.verify_markdown_format()
             if self.args.export_chat:
                 self.export_chat()
             elif self.args.pdf:
                 self.generate_pdfs()
             elif self.args.analyze:
                 self.analyze_markdown_files()
-            else:
+            elif not self.args.verify_format:  # Only analyze chats if not just verifying format
                 self.analyze_chats()
                 
         except ValueError as e:

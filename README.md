@@ -37,6 +37,27 @@ A tool for analyzing ChatGPT conversations against my `AI Decision Loop for GenA
   - Pattern identification
   - Recommendations for improvement
 
+### Format Verification
+- Verify and clean markdown files that don't match the required format
+- Required sections include:
+  - Brief Summary
+  - Five-Step Decision Loop Analysis (with all substeps)
+  - Loop Completion Analysis
+  - Breakdown Analysis
+  - Collaborative Pattern Analysis
+  - Recommendations
+- Invalid files are automatically removed
+- Summary shows total count of invalid files
+
+Example:
+```bash
+# Verify files in default directory
+python app.py --verify-format
+
+# Verify files in custom directory
+python app.py --verify-format --output custom/directory
+```
+
 ### Chat Export
 - Export individual chat histories in multiple formats:
   - Text format with clear role separation and timestamps
