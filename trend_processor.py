@@ -1,4 +1,5 @@
 import os
+import json
 from openai import OpenAI
 from typing import Dict, Any
 from configuration import Config
@@ -150,7 +151,6 @@ class TrendProcessor:
                 }
             else:
                 # Try to parse as JSON
-                import json
                 analysis = json.loads(result)
             
             # Save the analysis
