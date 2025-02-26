@@ -1,3 +1,4 @@
+from configuration import Config
 from chat_analysis_options import ChatAnalysisOptions
 
 def main() -> None:
