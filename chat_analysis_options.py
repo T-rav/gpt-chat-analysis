@@ -5,7 +5,7 @@ from cli import CLIParser
 from configuration import Config
 from conversation_data import ConversationData
 from pdf_generator import PDFGenerator
-from analysis_processor import AnalysisProcessor
+from trend_processor import TrendProcessor
 
 class ChatAnalysisOptions:
     """Main application class for chat analysis.
@@ -75,7 +75,7 @@ class ChatAnalysisOptions:
         """Analyze trends in markdown files from the specified directory."""
         print(f"\nAnalyzing trends in: {self.args.trends}")
         try:
-            analyzer = AnalysisProcessor()
+            analyzer = TrendProcessor()
             summary = analyzer.analyze_directory(self.args.trends)
             print("\nTrends Summary:")
             for key, value in summary.items():

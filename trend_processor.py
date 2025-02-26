@@ -2,7 +2,7 @@ import os
 import re
 
 # todo : use LLM and aggregate stats
-class AnalysisProcessor:
+class TrendProcessor:
     """Handles analysis of markdown files for chat completion statistics.
     
     This class is responsible for:
