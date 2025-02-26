@@ -311,7 +311,16 @@ class ConversationData:
                     os.rename(temp_filepath, filepath)
                     return filepath, 'success'
                 else:
-                    # If invalid, delete temp file and count as format error
+                    # If invalid and in single chat mode, print the analysis content
+                    if is_single_chat:
+                        print("\nAnalysis content that failed format validation:")
+                        print("=" * 80)
+                        print(analysis)
+                        print("=" * 80)
+                        print("\nMissing required sections:")
+                        FileValidator.verify_md_format(temp_filepath, debug=True)
+                    
+                    # Delete temp file and count as format error
                     os.remove(temp_filepath)
                     print(f"Format error in chat {chat_id} - generated analysis has invalid format")
                     return filepath, 'format_error'

@@ -8,11 +8,12 @@ class FileValidator:
     """Handles validation and cleaning of markdown files."""
     
     @staticmethod
-    def verify_md_format(file_path: str) -> bool:
+    def verify_md_format(file_path: str, debug: bool = False) -> bool:
         """Verify if a markdown file has the correct format.
         
         Args:
             file_path: Path to the markdown file
+            debug: If True, print detailed validation info
             
         Returns:
             bool: True if format is valid, False otherwise
@@ -46,6 +47,8 @@ class FileValidator:
             
             for indicator in generic_content_indicators:
                 if indicator in content:
+                    if debug:
+                        print(f"Found generic content indicator: '{indicator}'")
                     logging.warning(f"File {file_path} contains generic placeholder content")
                     return False
                 
@@ -56,6 +59,10 @@ class FileValidator:
                     missing_sections.append(section)
             
             if missing_sections:
+                if debug:
+                    print("Missing sections:")
+                    for section in missing_sections:
+                        print(f"  - {section}")
                 logging.warning(f"File {file_path} is missing required sections: {', '.join(missing_sections)}")
                 return False
                 
