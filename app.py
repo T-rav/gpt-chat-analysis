@@ -367,87 +367,12 @@ class ConversationData:
             if conv.get('id') and conv.get('create_time')
         }
         
+from chat_analysis_app import ChatAnalysisApp
+
 def main() -> None:
-    """Main entry point for the chat analysis tool.
-    
-    This function:
-    1. Parses command line arguments
-    2. Sets up configuration
-    3. Initializes the conversation processor
-    4. Runs the analysis in parallel
-    5. Optionally merges analysis into PDFs
-    6. Handles any errors that occur
-    """
-    try:
-        # Parse arguments
-        args = CLIParser.parse_args()
-        
-        # Create output directory if it doesn't exist
-        os.makedirs(args.output, exist_ok=True)
-        
-        # Initialize configuration
-        config = Config(
-            research_folder=args.output,
-            pdf_chunks=args.pdf,
-            pdf_output_dir=args.pdf_dir,
-            pdf_size_limit_mb=args.pdf_size_limit,
-            start_date=args.date
-        )
-        
-        # Handle chat export if requested
-        if args.export_chat:
-            print(f"\nExporting chat {args.export_chat}...")
-            data = ConversationData(config)
-            output_file = data.export_chat_history(args.export_chat, args.export_format)
-            print(f"Chat exported to: {output_file}")
-            return
-            
-        # Skip analysis if only PDF generation is requested
-        if args.pdf:
-            print(f"\nGenerating {args.pdf} PDF files from existing markdown...")
-            pdf_gen = PDFGenerator(
-                markdown_dir=args.output,
-                output_dir=args.pdf_dir,
-                size_limit_mb=config.pdf_size_limit_mb
-            )
-            pdf_gen.generate_pdfs(args.pdf)
-            return
-            
-        # Run analysis on markdown files if requested
-        if args.analyze:
-            print(f"\nAnalyzing markdown files in: {args.analyze}")
-            try:
-                analyzer = AnalysisProcessor()
-                summary = analyzer.analyze_directory(args.analyze)
-                print("\nAnalysis Summary:")
-                for key, value in summary.items():
-                    if isinstance(value, float):
-                        print(f"{key}: {value:.2f}")
-                    else:
-                        print(f"{key}: {value}")
-            except Exception as e:
-                print(f"Error during analysis: {str(e)}")
-            return
-            
-        # Process conversations and run analysis
-        print(f"\nInitializing chat analysis...")
-        data = ConversationData(config)
-        print(f"\nStarting parallel analysis...")
-        data.analyze_all_chats_parallel()
-        
-        print(f"\nAnalysis complete! Results saved to: {args.output}")
-        if args.pdf:
-            print(f"PDF files saved to: {args.pdf_dir}")
-        
-    except ValueError as e:
-        print(f"\nConfiguration Error: {str(e)}")
-        exit(1)
-    except FileNotFoundError as e:
-        print(f"\nFile Error: {str(e)}")
-        exit(1)
-    except Exception as e:
-        print(f"\nUnexpected Error: {str(e)}")
-        exit(1)
+    """Entry point for the chat analysis tool."""
+    app = ChatAnalysisApp()
+    app.run()
 
 if __name__ == '__main__':
     main()
