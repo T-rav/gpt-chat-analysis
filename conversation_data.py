@@ -180,10 +180,11 @@ class ConversationData:
             
         # Estimate token count (rough heuristic)
         estimated_tokens = sum(len(str(msg)) / 4 for msg in messages)
-        if estimated_tokens > 32000:  # OpenAI's max context
+        if estimated_tokens > 120000:  # OpenAI's max context is 128k for 4o say under this
             print(f"Skipping chat {chat_id} - estimated {int(estimated_tokens)} tokens exceeds limit")
             return filepath, 'skipped'
-            
+        
+        
         # Prepare conversation for analysis
         conversation = ""
         for msg in messages:
