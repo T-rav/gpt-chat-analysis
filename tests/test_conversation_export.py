@@ -33,16 +33,22 @@ def sample_conversations():
         {
             "id": "test_chat",
             "create_time": 1000,
-            "messages": [
-                {
-                    "author": {"role": "user"},
-                    "content": {"content_type": "text", "parts": ["Hello"]}
+            "current_node": "msg_2",
+            "mapping": {
+                "msg_1": {
+                    "message": {
+                        "author": {"role": "user"},
+                        "content": {"content_type": "text", "parts": ["Hello"]}
+                    }
                 },
-                {
-                    "author": {"role": "assistant"},
-                    "content": {"content_type": "text", "parts": ["Hi there"]}
+                "msg_2": {
+                    "parent": "msg_1",
+                    "message": {
+                        "author": {"role": "assistant"},
+                        "content": {"content_type": "text", "parts": ["Hi there"]}
+                    }
                 }
-            ]
+            }
         }
     ]
 
