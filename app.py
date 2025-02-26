@@ -216,6 +216,15 @@ class ConversationData:
             print(f"Warning: No messages found in chat {chat_id}")
             return filepath, False  # Return tuple for consistency
         
+        # Check total conversation length and skip if too large
+        total_chars = sum(len(msg.get('content', {}).get('parts', [''])[0]) for msg in messages)
+        # Rough estimate: 1 char ≈ 0.25 tokens
+        estimated_tokens = total_chars / 4
+        
+        if estimated_tokens > 100000:  # Conservative limit to avoid API errors
+            print(f"Skipping chat {chat_id} - estimated {int(estimated_tokens)} tokens exceeds limit")
+            return filepath, False
+            
         # Prepare conversation for analysis
         conversation = ""
         for msg in messages:
