@@ -58,9 +58,9 @@ class CLIParser:
             help='Format for chat export (default: txt)'
         )
         parser.add_argument(
-            '--analyze',
+            '--trends',
             type=str,
-            help='Run analysis on markdown files in the specified directory'
+            help='Analyze trends in markdown files from the specified directory'
         )
         parser.add_argument(
             '--verify-format',

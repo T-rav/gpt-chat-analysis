@@ -71,20 +71,20 @@ class ChatAnalysisOptions:
         except Exception as e:
             print(f"Error during verification: {str(e)}")
 
-    def analyze_markdown_files(self) -> None:
-        """Analyze markdown files in the specified directory."""
-        print(f"\nAnalyzing markdown files in: {self.args.analyze}")
+    def analyze_trends(self) -> None:
+        """Analyze trends in markdown files from the specified directory."""
+        print(f"\nAnalyzing trends in: {self.args.trends}")
         try:
             analyzer = AnalysisProcessor()
-            summary = analyzer.analyze_directory(self.args.analyze)
-            print("\nAnalysis Summary:")
+            summary = analyzer.analyze_directory(self.args.trends)
+            print("\nTrends Summary:")
             for key, value in summary.items():
                 if isinstance(value, float):
                     print(f"{key}: {value:.2f}")
                 else:
                     print(f"{key}: {value}")
         except Exception as e:
-            print(f"Error during analysis: {str(e)}")
+            print(f"Error analyzing trends: {str(e)}")
     
     def analyze_chats(self) -> None:
         """Run parallel analysis on all chat conversations."""
@@ -106,8 +106,8 @@ class ChatAnalysisOptions:
                 self.export_chat()
             elif self.args.pdf:
                 self.generate_pdfs()
-            elif self.args.analyze:
-                self.analyze_markdown_files()
+            elif self.args.trends:
+                self.analyze_trends()
             elif not self.args.verify_format:  # Only analyze chats if not just verifying format
                 self.analyze_chats()
                 

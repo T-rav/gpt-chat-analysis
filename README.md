@@ -97,6 +97,9 @@ python app.py -o analysis
 # Later, add more chats and run again
 # (existing files in analysis/ are preserved)
 python app.py -o analysis
+
+# Analyze trends in existing analysis files
+python app.py --trends analysis
 ```
 
 ## Requirements
