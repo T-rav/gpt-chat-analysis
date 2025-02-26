@@ -11,16 +11,16 @@ class Config:
     """Configuration for the conversation analysis.
     
     Attributes:
-        convo_folder: Directory containing conversation files (default: './chats')
+        convo_folder: Directory containing conversation files (default: 'chats')
         research_folder: Output directory for analysis files (default: 'analysis')
         local_tz: Local timezone for timestamp processing (default: 'US/Mountain')
         openai_api_key: API key for OpenAI services (from env or passed directly)
-        model: GPT model to use for analysis (default: 'gpt-4')
+        model: GPT model to use for analysis (default: 'gpt-4o')
         temperature: Temperature setting for GPT responses (default: 0.2)
         max_workers: Maximum number of parallel workers (default: min(8, CPU_COUNT))
         pdf_chunks: Number of PDF files to split analysis into (default: None)
-        pdf_output_dir: Directory for PDF output files (default: 'pdf_analysis')
-        pdf_size_limit_mb: Maximum size in MB for each PDF file (default: 50)
+        pdf_output_dir: Directory for PDF output files (default: 'analysis/pdf')
+        pdf_size_limit_mb: Maximum size in MB for each PDF file (default: 1)
     """
     # Paths (with defaults)
     convo_folder: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chats')
