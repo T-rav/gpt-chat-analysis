@@ -134,6 +134,9 @@ python app.py
 
 # Generate heatmap visualizations
 python app.py --heatmap
+
+# Generate trend analysis across all chat analysis documents
+python app.py --trends
 ```
 
 ### 📄 PDF Generation
@@ -145,7 +148,7 @@ python app.py --pdf 10 --pdf-size-limit 5
 ### 🔧 Configuration
 Customize settings in `configuration.py`:
 - `CONVO_FOLDER`: Chat file location.
-- `DEFAULT_MODEL`: GPT model (default: `gpt-4`).
+- `DEFAULT_MODEL`: GPT model (default: `gpt-4o`).
 - `MAX_WORKERS`: Number of parallel analysis threads.
 
 Each report includes:
