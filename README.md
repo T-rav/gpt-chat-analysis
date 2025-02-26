@@ -49,9 +49,6 @@ Example:
 # Export a chat in text format
 python app.py --export-chat <conversation_id> --export-format txt
 
-# Export in markdown format
-python app.py --export-chat <conversation_id> --export-format md
-
 # Export raw conversation data
 python app.py --export-chat <conversation_id> --export-format json
 ```
