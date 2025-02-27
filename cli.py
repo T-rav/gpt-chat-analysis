@@ -72,4 +72,9 @@ class CLIParser:
             type=str,
             help='Process a single chat ID for analysis'
         )
+        parser.add_argument(
+            '--force-reprocess',
+            action='store_true',
+            help='Force reprocessing of all files, ignoring cached results'
+        )
         return parser.parse_args()

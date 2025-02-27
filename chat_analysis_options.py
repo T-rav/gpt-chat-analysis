@@ -76,7 +76,10 @@ class ChatAnalysisOptions:
         """Analyze trends in markdown files from the specified directory or single chat."""
         try:
             # Use the output directory from config for JSON analysis files
-            analyzer = TrendProcessor(output_dir=self.config.research_folder)
+            analyzer = TrendProcessor(
+                output_dir=self.config.research_folder,
+                force_reprocess=self.args.force_reprocess
+            )
             
             # Determine the analysis directory (either from --trends or -o)
             analysis_dir = self.args.trends if self.args.trends else self.args.output

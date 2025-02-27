@@ -14,11 +14,12 @@ class TrendProcessor:
     3. Generating statistical summaries
     """
     
-    def __init__(self, output_dir: str = 'analysis'):
+    def __init__(self, output_dir: str = 'analysis', force_reprocess: bool = False):
         """Initialize the analysis processor with OpenAI client.
         
         Args:
             output_dir (str): Directory to save analysis JSON files (default: 'analysis')
+            force_reprocess (bool): If True, reprocess all files even if cached results exist
         """
         config = Config()
         if not config.openai_api_key:
@@ -28,6 +29,7 @@ class TrendProcessor:
         self.model = config.model
         self.temperature = config.temperature
         self.output_dir = output_dir
+        self.force_reprocess = force_reprocess
         
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
@@ -41,6 +43,9 @@ class TrendProcessor:
         Returns:
             bool: True if file should be processed, False if it can be skipped
         """
+        if self.force_reprocess:
+            return True
+            
         json_path = os.path.join(
             self.output_dir,
             os.path.splitext(os.path.basename(md_path))[0] + '.json'
