@@ -177,7 +177,7 @@ class TrendProcessor:
         
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
+                model='gpt-4o-mini',
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -213,7 +213,9 @@ class TrendProcessor:
                     },
                     'insights': {
                         'novel_patterns': False,
-                        'ai_partnership': False
+                        'ai_partnership': False,
+                        'ai_as_critic': False,
+                        'decision_intelligence': False
                     }
                 }
             else:
@@ -230,7 +232,7 @@ class TrendProcessor:
             default_analysis = {
                 'loop_completion': {'completed': False, 'exit_at_step_one': True, 'skipped_validation': False},
                 'breakdown': {'exit_step': 'unknown', 'failure_reason': 'Failed to parse analysis'},
-                'insights': {'novel_patterns': False, 'ai_partnership': False}
+                'insights': {'novel_patterns': False, 'ai_partnership': False, 'ai_as_critic': False, 'decision_intelligence': False}
             }
             
             # Save the default analysis for failed cases
@@ -275,7 +277,9 @@ class TrendProcessor:
             'exit_step': breakdown['exit_step'],
             'failure_reason': breakdown['failure_reason'],
             'novel_patterns': 1 if insights['novel_patterns'] else 0,
-            'ai_partnership': 1 if insights['ai_partnership'] else 0
+            'ai_partnership': 1 if insights['ai_partnership'] else 0,
+            'ai_as_critic': 1 if insights.get('ai_as_critic', False) else 0,
+            'decision_intelligence': 1 if insights.get('decision_intelligence', False) else 0
         }
     
     def _generate_summary(self, stats_list):
@@ -307,6 +311,8 @@ class TrendProcessor:
         skipped_validation = sum(1 for s in engaged_chats if s.get('skipped_validation', False))
         novel_patterns = sum(1 for s in engaged_chats if s.get('novel_patterns', False))
         ai_partnership = sum(1 for s in engaged_chats if s.get('ai_partnership', False))
+        ai_as_critic = sum(1 for s in engaged_chats if s.get('ai_as_critic', False))
+        decision_intelligence = sum(1 for s in engaged_chats if s.get('decision_intelligence', False))
         
         def normalize_reason(reason):
             """Normalize failure reasons to avoid duplicates with slightly different wording."""
@@ -357,6 +363,8 @@ class TrendProcessor:
             "Insights (of engaged)": {
                 "Novel Patterns (%)": (novel_patterns / total_engaged) * 100,
                 "AI Partnership (%)": (ai_partnership / total_engaged) * 100,
+                "AI as Critic (%)": (ai_as_critic / total_engaged) * 100,
+                "Decision Intelligence (%)": (decision_intelligence / total_engaged) * 100,
                 "Partnership Success": {
                     "Partnerships": ai_partnership,
                     "Successful Completions with Partnership": sum(1 for s in engaged_chats 
@@ -365,6 +373,20 @@ class TrendProcessor:
                         if s.get('ai_partnership', False) and s.get('completed', 0) == 1) / ai_partnership * 100) if ai_partnership > 0 else 0,
                     "Non-Partnership Success Rate (%)": (sum(1 for s in engaged_chats 
                         if not s.get('ai_partnership', False) and s.get('completed', 0) == 1) / (total_engaged - ai_partnership) * 100) if (total_engaged - ai_partnership) > 0 else 0
+                },
+                "Critical Thinking": {
+                    "AI as Critic Usage": ai_as_critic,
+                    "Successful Completions with AI Critic": sum(1 for s in engaged_chats 
+                        if s.get('ai_as_critic', False) and s.get('completed', 0) == 1),
+                    "Success Rate with AI Critic (%)": (sum(1 for s in engaged_chats 
+                        if s.get('ai_as_critic', False) and s.get('completed', 0) == 1) / ai_as_critic * 100) if ai_as_critic > 0 else 0
+                },
+                "Decision Making": {
+                    "AI-Driven Decisions": decision_intelligence,
+                    "Successful Completions with AI-Driven Decisions": sum(1 for s in engaged_chats 
+                        if s.get('decision_intelligence', False) and s.get('completed', 0) == 1),
+                    "Success Rate with AI-Driven Decisions (%)": (sum(1 for s in engaged_chats 
+                        if s.get('decision_intelligence', False) and s.get('completed', 0) == 1) / decision_intelligence * 100) if decision_intelligence > 0 else 0
                 }
             }
         }
