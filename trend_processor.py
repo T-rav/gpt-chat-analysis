@@ -368,6 +368,7 @@ class TrendProcessor:
             "Total Chats": {
                 "Total Analyzed": total_chats,
                 "Step One Exits": total_chats - total_engaged,
+                "Step One Exit Rate (%)": ((total_chats - total_engaged) / total_chats) * 100,
                 "Engaged Conversations": total_engaged
             },
             "Loop Completion (of engaged)": {
