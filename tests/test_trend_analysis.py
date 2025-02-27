@@ -81,6 +81,7 @@ def test_analyze_with_openai(trend_processor, temp_dir, response_content, expect
         assert 'loop_completion' in result
         assert result['loop_completion']['completed'] == expected_completed
         
+        
         # Verify JSON file was created
         json_path = os.path.join(temp_dir, "test.json")
         assert os.path.exists(json_path)
@@ -89,6 +90,65 @@ def test_analyze_with_openai(trend_processor, temp_dir, response_content, expect
             assert isinstance(saved_data, dict)
             assert 'loop_completion' in saved_data
             assert saved_data['loop_completion']['completed'] == expected_completed
+
+def test_analyze_with_new_metrics(trend_processor, temp_dir):
+    """Test analysis with ai_as_critic and decision_intelligence metrics."""
+    # Create test file
+    test_file = "test.md"
+    with open(os.path.join(temp_dir, test_file), "w") as f:
+        f.write("# Test Content")
+    
+    # Test response with new metrics
+    response_content = json.dumps({
+        "loop_completion": {"completed": True, "exit_at_step_one": False, "skipped_validation": False},
+        "breakdown": {"exit_step": "none", "failure_reason": "none"},
+        "insights": {
+            "novel_patterns": True,
+            "ai_partnership": True,
+            "ai_as_critic": True,
+            "decision_intelligence": True
+        }
+    })
+    
+    mock_completion = create_mock_completion(response_content)
+    
+    with patch.object(trend_processor.client.chat.completions, 'create', return_value=mock_completion):
+        result = trend_processor._analyze_with_openai("test content", test_file)
+        assert isinstance(result, dict)
+        assert 'insights' in result
+        insights = result['insights']
+        assert insights.get('ai_as_critic') is True
+        assert insights.get('decision_intelligence') is True
+
+def test_process_file_cache(trend_processor, temp_dir):
+    """Test cache handling of new metrics."""
+    # Create test file
+    test_file = os.path.join(temp_dir, "test_cache.md")
+    with open(test_file, "w") as f:
+        f.write("# Test Content")
+    
+    # Create cached result with new metrics
+    cached_result = {
+        "loop_completion": {"completed": True, "exit_at_step_one": False, "skipped_validation": False},
+        "breakdown": {"exit_step": "none", "failure_reason": "none"},
+        "insights": {
+            "novel_patterns": True,
+            "ai_partnership": True,
+            "ai_as_critic": True,
+            "decision_intelligence": True
+        }
+    }
+    
+    json_file = os.path.join(temp_dir, "test_cache.json")
+    with open(json_file, "w") as f:
+        json.dump(cached_result, f)
+    
+    # Process file (should use cache)
+    result = trend_processor._process_file_with_cache(test_file)
+    
+    # Verify new metrics are preserved
+    assert result['ai_as_critic'] is True
+    assert result['decision_intelligence'] is True
 
 def test_process_file(trend_processor, temp_dir):
     """Test processing of individual markdown files."""

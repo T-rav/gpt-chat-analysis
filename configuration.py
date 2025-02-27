@@ -37,7 +37,7 @@ class Config:
     
     # Analysis prompts
     trend_analysis_prompt: str = (
-        "You are an expert analyst evaluating AI conversations. Your task is to analyze the chat summary "
+        "You are an expert trend analyst evaluating AI conversations. Your task is to analyze the chat summary "
         "and determine:\n\n"
         "1. How Often Was the Full AI Decision Loop Followed?\n"
         "   - Did the user complete a loop?\n"
