@@ -31,7 +31,7 @@ A research toolbox for analyzing your ChatGPT conversations using the AI Decisio
    ```
 
 3. Set up environment variables:
-   - Create a `.env` file:
+   Create a `.env` file:
      ```env
      OPENAI_API_KEY=your_api_key_here
      ```
