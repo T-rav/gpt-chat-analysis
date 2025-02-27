@@ -1,7 +1,9 @@
 """Tests for the conversation analysis functionality."""
 
 import os
+import json
 import pytest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from configuration import Config
@@ -241,3 +243,133 @@ Test
                     assert "# 2. Five-Step Decision Loop Analysis" in content
                     assert "# 3. Collaborative Pattern Analysis" in content
                     assert "# 4. Recommendations" in content
+
+def test_analyze_chat_with_invalid_content(conversation_data, temp_dir):
+    """Test analyzing a chat with invalid content types and missing fields."""
+    chat_id = "test_chat"
+    messages = [
+        # Missing author role
+        {"author": {}, "content": {"content_type": "text", "parts": ["Hello"]}},
+        # Missing content type
+        {"author": {"role": "assistant"}, "content": {"parts": ["Hi"]}},
+        # Invalid content type
+        {"author": {"role": "user"}, "content": {"content_type": "invalid", "parts": ["Test"]}},
+        # Missing parts
+        {"author": {"role": "assistant"}, "content": {"content_type": "text"}},
+        # Empty parts
+        {"author": {"role": "user"}, "content": {"content_type": "text", "parts": []}},
+        # Valid message
+        {"author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["Valid"]}}
+    ]
+    
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = """
+# 1. Brief Summary
+Test analysis
+
+# 2. Five-Step Decision Loop Analysis
+## Step 1: Problem Framing & Initial Prompting
+Test
+
+## Step 2: Response Evaluation & Validation
+Test
+
+## Step 3: Expertise Application
+Test
+
+## Step 4: Critical Assessment
+### 4.1 Loop Completion Analysis
+Test
+
+### 4.2 Breakdown Analysis
+Test
+
+## Step 5: Process Improvement
+Test
+
+# 3. Collaborative Pattern Analysis
+## Observed Patterns
+Test
+
+## Novel Patterns
+Test
+
+# 4. Recommendations
+Test
+"""
+    
+    with patch.object(conversation_data.openai_client.chat.completions, 'create', return_value=mock_response):
+        output_path, success = conversation_data.analyze_and_save_chat(chat_id, messages, temp_dir)
+        assert success == 'success'
+        
+        # Verify the file was created
+        assert os.path.exists(output_path)
+        with open(output_path, 'r') as f:
+            content = f.read()
+            assert "# 1. Brief Summary" in content
+
+
+
+def test_parallel_processing_error_handling(conversation_data, temp_dir):
+    """Test error handling in parallel chat processing."""
+    chats = {
+        "chat1": [{"author": {"role": "user"}, "content": {"content_type": "text", "parts": ["Test"]}}],
+        "chat2": [{"invalid": "data"}]  # Invalid chat data
+    }
+    
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = """
+# 1. Brief Summary
+Test analysis
+
+# 2. Five-Step Decision Loop Analysis
+## Step 1: Problem Framing & Initial Prompting
+Test
+
+## Step 2: Response Evaluation & Validation
+Test
+
+## Step 3: Expertise Application
+Test
+
+## Step 4: Critical Assessment
+### 4.1 Loop Completion Analysis
+Test
+
+### 4.2 Breakdown Analysis
+Test
+
+## Step 5: Process Improvement
+Test
+
+# 3. Collaborative Pattern Analysis
+## Observed Patterns
+Test
+
+## Novel Patterns
+Test
+
+# 4. Recommendations
+Test
+"""
+    
+    with patch.object(conversation_data.openai_client.chat.completions, 'create', return_value=mock_response), \
+         patch.object(conversation_data, '_load_chat_data', return_value=chats), \
+         patch('conversation_data.ConversationData.analyze_and_save_chat') as mock_analyze:
+        # Mock analyze_and_save_chat to fail for chat2
+        def mock_analyze_impl(chat_id, messages, output_dir):
+            if chat_id == "chat2":
+                return os.path.join(output_dir, f"{chat_id}.md"), "error"
+            return os.path.join(output_dir, f"{chat_id}.md"), "success"
+        mock_analyze.side_effect = mock_analyze_impl
+        
+        # Set research folder to temp_dir for testing
+        conversation_data.config.research_folder = temp_dir
+        conversation_data.analyze_all_chats_parallel()
+        
+        # Verify chat1 was processed successfully
+        assert mock_analyze.call_count == 2
+        assert mock_analyze.call_args_list[0][0][0] == "chat1"
+        assert mock_analyze.call_args_list[1][0][0] == "chat2"
