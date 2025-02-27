@@ -54,14 +54,14 @@ Customize settings in `configuration.py`:
 # Run chat analysis
 python app.py -o analysis
 
+# Verify files after doing analysis summaries
+python app.py --verify-format analysis/
+
 # Generate PDFs with custom size limit
 python app.py --pdf 10 --pdf-size-limit 5
 
 # Generate trend analysis across all chat analysis documents
 python app.py --trends analysis/
-
-# Verify files after doing analysis
-python app.py --verify-format analysis/
 
 # Export a chat for debugging - supports both txt and json
 python app.py --export-chat <conversation_id> --export-format txt
