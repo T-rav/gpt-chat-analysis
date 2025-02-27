@@ -58,7 +58,8 @@ def test_cli_parser_custom_values():
         '--export-format', 'json',
         '--trends', 'analysis_dir',
         '--verify-format',
-        '--chat-id', 'chat456'
+        '--chat-id', 'chat456',
+        '--force-reprocess'
     ]):
         args = CLIParser.parse_args()
         assert args.output == "custom_output"
@@ -71,5 +72,42 @@ def test_cli_parser_custom_values():
         assert args.trends == "analysis_dir"
         assert args.verify_format is True
         assert args.chat_id == "chat456"
+        assert args.force_reprocess is True
+
+def test_cli_parser_invalid_date():
+    """Test CLI parser with invalid date format."""
+    with patch('sys.argv', ['app.py', '-d', 'invalid-date']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
+
+def test_cli_parser_invalid_export_format():
+    """Test CLI parser with invalid export format."""
+    with patch('sys.argv', ['app.py', '--export-format', 'invalid']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
+
+def test_cli_parser_invalid_numeric_params():
+    """Test CLI parser with invalid numeric parameters."""
+    # Test invalid PDF count
+    with patch('sys.argv', ['app.py', '--pdf', 'invalid']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
+    
+    # Test invalid PDF size limit
+    with patch('sys.argv', ['app.py', '--pdf-size-limit', 'invalid']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
+
+def test_cli_parser_negative_numeric_params():
+    """Test CLI parser with negative numeric parameters."""
+    # Test negative PDF count
+    with patch('sys.argv', ['app.py', '--pdf', '-1']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
+    
+    # Test negative PDF size limit
+    with patch('sys.argv', ['app.py', '--pdf-size-limit', '-1']), \
+         pytest.raises(SystemExit):
+        CLIParser.parse_args()
 
 

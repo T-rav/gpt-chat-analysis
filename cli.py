@@ -8,6 +8,58 @@ class CLIParser:
     """Handles command-line argument parsing for the chat analysis tool."""
     
     @staticmethod
+    def _validate_positive_int(value: str, param: str) -> int:
+        """Validate that the value is a positive integer.
+        
+        Args:
+            value: The value to validate
+            param: The parameter name for error messages
+            
+        Returns:
+            int: The validated positive integer
+            
+        Raises:
+            argparse.ArgumentTypeError: If validation fails
+        """
+        try:
+            ivalue = int(value)
+            if ivalue <= 0:
+                raise argparse.ArgumentTypeError(
+                    f"{param} must be a positive integer, got {value}"
+                )
+            return ivalue
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f"{param} must be a positive integer, got {value}"
+            )
+    
+    @staticmethod
+    def _validate_positive_float(value: str, param: str) -> float:
+        """Validate that the value is a positive float.
+        
+        Args:
+            value: The value to validate
+            param: The parameter name for error messages
+            
+        Returns:
+            float: The validated positive float
+            
+        Raises:
+            argparse.ArgumentTypeError: If validation fails
+        """
+        try:
+            fvalue = float(value)
+            if fvalue <= 0:
+                raise argparse.ArgumentTypeError(
+                    f"{param} must be a positive number, got {value}"
+                )
+            return fvalue
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f"{param} must be a positive number, got {value}"
+            )
+    
+    @staticmethod
     def parse_args() -> Any:
         """Parse command line arguments.
         
@@ -25,7 +77,7 @@ class CLIParser:
         )
         parser.add_argument(
             '--pdf',
-            type=int,
+            type=lambda x: CLIParser._validate_positive_int(x, '--pdf'),
             help='Merge analysis into specified number of PDF files'
         )
         parser.add_argument(
@@ -36,7 +88,7 @@ class CLIParser:
         )
         parser.add_argument(
             '--pdf-size-limit',
-            type=float,
+            type=lambda x: CLIParser._validate_positive_float(x, '--pdf-size-limit'),
             default=1.0,
             help='Maximum size in MB for each PDF file (default: 1MB)'
         )
