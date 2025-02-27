@@ -71,8 +71,18 @@ class TrendProcessor:
                 os.path.splitext(filename)[0] + '.json'
             )
             with open(json_path, 'r') as f:
-                stats = json.load(f)
-                stats['cached'] = True
+                data = json.load(f)
+                # Map old format to new format
+                stats = {
+                    'completed': 1 if data.get('loop_completion', {}).get('completed', False) else 0,
+                    'exit_at_step_one': data.get('loop_completion', {}).get('exit_at_step_one', False),
+                    'skipped_validation': data.get('loop_completion', {}).get('skipped_validation', False),
+                    'exit_step': data.get('breakdown', {}).get('exit_step', 'unknown'),
+                    'failure_reason': data.get('breakdown', {}).get('failure_reason', 'unknown'),
+                    'novel_patterns': data.get('insights', {}).get('novel_patterns', False),
+                    'ai_partnership': data.get('insights', {}).get('ai_partnership', False),
+                    'cached': True
+                }
                 return stats
         
         # Process file if no cache available
@@ -307,19 +317,42 @@ class TrendProcessor:
             return {"Total Chats Analyzed": 0}
             
         # Initialize counters
-        completed = sum(s['completed'] for s in stats_list)
-        exit_at_step_one = sum(s['exit_at_step_one'] for s in stats_list)
-        skipped_validation = sum(s['skipped_validation'] for s in stats_list)
-        novel_patterns = sum(s['novel_patterns'] for s in stats_list)
-        ai_partnership = sum(s['ai_partnership'] for s in stats_list)
+        completed = sum(1 for s in stats_list if s.get('completed', 0) == 1)
+        exit_at_step_one = sum(1 for s in stats_list if s.get('exit_at_step_one', False))
+        skipped_validation = sum(1 for s in stats_list if s.get('skipped_validation', False))
+        novel_patterns = sum(1 for s in stats_list if s.get('novel_patterns', False))
+        ai_partnership = sum(1 for s in stats_list if s.get('ai_partnership', False))
+        
+        def normalize_reason(reason):
+            """Normalize failure reasons to avoid duplicates with slightly different wording."""
+            reason = reason.lower().strip()
+            
+            # Common variations of the same reason
+            if 'insufficient' in reason or 'not enough' in reason:
+                return 'insufficient_information'
+            if 'unclear' in reason or 'ambiguous' in reason:
+                return 'unclear_requirements'
+            if 'invalid' in reason or 'malformed' in reason:
+                return 'invalid_format'
+            if 'timeout' in reason or 'no response' in reason:
+                return 'timeout'
+            if reason == 'none':
+                return 'none'
+            if reason == 'unknown':
+                return 'unknown'
+            
+            # Default to the original reason if no match
+            return reason.replace(' ', '_')
         
         # Count exit steps
         exit_steps = {}
         failure_reasons = {}
         for s in stats_list:
-            if not s['completed']:
-                exit_steps[s['exit_step']] = exit_steps.get(s['exit_step'], 0) + 1
-                failure_reasons[s['failure_reason']] = failure_reasons.get(s['failure_reason'], 0) + 1
+            if s.get('completed', 0) != 1:
+                exit_step = s.get('exit_step', 'unknown')
+                failure_reason = normalize_reason(s.get('failure_reason', 'unknown'))
+                exit_steps[exit_step] = exit_steps.get(exit_step, 0) + 1
+                failure_reasons[failure_reason] = failure_reasons.get(failure_reason, 0) + 1
         
         return {
             "Total Chats Analyzed": total_chats,
