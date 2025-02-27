@@ -177,7 +177,7 @@ class TrendProcessor:
         
         try:
             response = self.client.chat.completions.create(
-                model='gpt-4o-mini',
+                model=self.config.trend_analysis_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

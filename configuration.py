@@ -32,6 +32,7 @@ class Config:
     # OpenAI settings
     openai_api_key: Optional[str] = None
     model: str = 'gpt-4o'
+    trend_analysis_model: str = 'gpt-4o-mini'
     temperature: float = 0.2
     
     # Analysis prompts
