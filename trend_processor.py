@@ -381,6 +381,15 @@ class TrendProcessor:
             },
             "Insights (of engaged)": {
                 "Novel Patterns (%)": (novel_patterns / total_engaged) * 100,
-                "AI Partnership (%)": (ai_partnership / total_engaged) * 100
+                "AI Partnership (%)": (ai_partnership / total_engaged) * 100,
+                "Partnership Success": {
+                    "Partnerships": ai_partnership,
+                    "Successful Completions with Partnership": sum(1 for s in engaged_chats 
+                        if s.get('ai_partnership', False) and s.get('completed', 0) == 1),
+                    "Success Rate of Partnerships (%)": (sum(1 for s in engaged_chats 
+                        if s.get('ai_partnership', False) and s.get('completed', 0) == 1) / ai_partnership * 100) if ai_partnership > 0 else 0,
+                    "Non-Partnership Success Rate (%)": (sum(1 for s in engaged_chats 
+                        if not s.get('ai_partnership', False) and s.get('completed', 0) == 1) / (total_engaged - ai_partnership) * 100) if (total_engaged - ai_partnership) > 0 else 0
+                }
             }
         }
