@@ -316,12 +316,22 @@ class TrendProcessor:
         if total_chats == 0:
             return {"Total Chats Analyzed": 0}
             
-        # Initialize counters
-        completed = sum(1 for s in stats_list if s.get('completed', 0) == 1)
-        exit_at_step_one = sum(1 for s in stats_list if s.get('exit_at_step_one', False))
-        skipped_validation = sum(1 for s in stats_list if s.get('skipped_validation', False))
-        novel_patterns = sum(1 for s in stats_list if s.get('novel_patterns', False))
-        ai_partnership = sum(1 for s in stats_list if s.get('ai_partnership', False))
+        # Filter out step one exits first
+        engaged_chats = [s for s in stats_list if not s.get('exit_at_step_one', False)]
+        total_engaged = len(engaged_chats)
+        
+        if total_engaged == 0:
+            return {
+                "Total Chats Analyzed": total_chats,
+                "Step One Exits": total_chats,
+                "Engaged Conversations": 0
+            }
+        
+        # Initialize counters for engaged chats only
+        completed = sum(1 for s in engaged_chats if s.get('completed', 0) == 1)
+        skipped_validation = sum(1 for s in engaged_chats if s.get('skipped_validation', False))
+        novel_patterns = sum(1 for s in engaged_chats if s.get('novel_patterns', False))
+        ai_partnership = sum(1 for s in engaged_chats if s.get('ai_partnership', False))
         
         def normalize_reason(reason):
             """Normalize failure reasons to avoid duplicates with slightly different wording."""
@@ -344,10 +354,10 @@ class TrendProcessor:
             # Default to the original reason if no match
             return reason.replace(' ', '_')
         
-        # Count exit steps
+        # Count exit steps for engaged chats only
         exit_steps = {}
         failure_reasons = {}
-        for s in stats_list:
+        for s in engaged_chats:
             if s.get('completed', 0) != 1:
                 exit_step = s.get('exit_step', 'unknown')
                 failure_reason = normalize_reason(s.get('failure_reason', 'unknown'))
@@ -355,18 +365,21 @@ class TrendProcessor:
                 failure_reasons[failure_reason] = failure_reasons.get(failure_reason, 0) + 1
         
         return {
-            "Total Chats Analyzed": total_chats,
-            "Loop Completion": {
-                "Completed (%)": (completed / total_chats) * 100,
-                "Exit at Step One (%)": (exit_at_step_one / total_chats) * 100,
-                "Skipped Validation (%)": (skipped_validation / total_chats) * 100
+            "Total Chats": {
+                "Total Analyzed": total_chats,
+                "Step One Exits": total_chats - total_engaged,
+                "Engaged Conversations": total_engaged
             },
-            "Breakdown": {
+            "Loop Completion (of engaged)": {
+                "Completed (%)": (completed / total_engaged) * 100,
+                "Skipped Validation (%)": (skipped_validation / total_engaged) * 100
+            },
+            "Breakdown (of engaged)": {
                 "Exit Steps": exit_steps,
                 "Failure Reasons": failure_reasons
             },
-            "Insights": {
-                "Novel Patterns (%)": (novel_patterns / total_chats) * 100,
-                "AI Partnership (%)": (ai_partnership / total_chats) * 100
+            "Insights (of engaged)": {
+                "Novel Patterns (%)": (novel_patterns / total_engaged) * 100,
+                "AI Partnership (%)": (ai_partnership / total_engaged) * 100
             }
         }
