@@ -19,9 +19,15 @@ A tool for analyzing ChatGPT conversations against the `AI Decision Loop for Gen
 
 ## Features
 
+### 🧠 AI Intelligence Metrics
+- **AI as Critic**: Tracks when AI acts as a critical evaluator
+- **Decision Intelligence**: Measures AI-driven decision-making effectiveness
+- **Success Rate Analysis**: Evaluates completion rates with AI partnership
+
 ### 📊 Conversation Analysis
 - Analyzes conversations using OpenAI's GPT-4.
 - Evaluates decision-making and interaction patterns.
+- Tracks AI's role as a critic and decision intelligence.
 - Generates detailed markdown reports.
 
 ### 🔥 Heatmap Generation
@@ -38,8 +44,11 @@ A tool for analyzing ChatGPT conversations against the `AI Decision Loop for Gen
   - Recommendations for improvement.
 
 ```bash
-# Initial analysis
+# Initial analysis to build summaries 
 python app.py -o analysis
+
+# Run trend analysis
+python app.py --trends analysis
 ```
 
 ### ✅ Format Verification

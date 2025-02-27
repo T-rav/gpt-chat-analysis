@@ -1,6 +1,6 @@
 import os
 import json
-import multiprocessing as mp
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 from typing import Dict, Any, List
@@ -137,7 +137,7 @@ class TrendProcessor:
         cached = 0
         errors = 0
         
-        max_workers = min(mp.cpu_count(), len(md_files))
+        max_workers = min(os.cpu_count() or 1, len(md_files))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_file = {
                 executor.submit(self._process_file_with_cache, f): f 
