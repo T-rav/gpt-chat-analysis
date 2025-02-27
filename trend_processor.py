@@ -86,6 +86,8 @@ class TrendProcessor:
                     'failure_reason': data.get('breakdown', {}).get('failure_reason', 'unknown'),
                     'novel_patterns': data.get('insights', {}).get('novel_patterns', False),
                     'ai_partnership': data.get('insights', {}).get('ai_partnership', False),
+                    'ai_as_critic': data.get('insights', {}).get('ai_as_critic', False),
+                    'decision_intelligence': data.get('insights', {}).get('decision_intelligence', False),
                     'cached': True
                 }
                 return stats
