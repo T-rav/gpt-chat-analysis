@@ -134,10 +134,10 @@ def test_analyze_directory(trend_processor, temp_dir):
     with patch.object(trend_processor.client.chat.completions, 'create', return_value=mock_completion):
         summary = trend_processor.analyze_directory(temp_dir)
         assert isinstance(summary, dict)
-        assert 'Total Chats Analyzed' in summary
-        assert summary['Total Chats Analyzed'] == 3
-        assert summary['Loop Completion']['Completed (%)'] == 100.0
-        assert summary['Insights']['Novel Patterns (%)'] == 100.0
+        assert summary['Total Chats']['Total Analyzed'] == 3
+        assert summary['Total Chats']['Engaged Conversations'] == 3
+        assert summary['Loop Completion (of engaged)']['Completed (%)'] == 100.0
+        assert summary['Insights (of engaged)']['Novel Patterns (%)'] == 100.0
         
         # Verify JSON files were created
         for i in range(3):

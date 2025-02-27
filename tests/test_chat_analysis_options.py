@@ -101,7 +101,10 @@ def test_analyze_trends_single_chat(chat_analysis, mock_args):
         
         chat_analysis.analyze_trends()
         
-        mock_trend.assert_called_once_with(output_dir=chat_analysis.config.research_folder)
+        mock_trend.assert_called_once_with(
+            output_dir=chat_analysis.config.research_folder,
+            force_reprocess=mock_args.force_reprocess
+        )
         mock_instance._process_file.assert_called_once_with(os.path.join("test_trends", "test_chat.md"))
 
 def test_analyze_trends_directory(chat_analysis, mock_args):
@@ -117,7 +120,10 @@ def test_analyze_trends_directory(chat_analysis, mock_args):
         
         chat_analysis.analyze_trends()
         
-        mock_trend.assert_called_once_with(output_dir=chat_analysis.config.research_folder)
+        mock_trend.assert_called_once_with(
+            output_dir=chat_analysis.config.research_folder,
+            force_reprocess=mock_args.force_reprocess
+        )
         mock_instance.analyze_directory.assert_called_once_with("test_trends")
 
 def test_analyze_chats_single(chat_analysis, mock_args):
