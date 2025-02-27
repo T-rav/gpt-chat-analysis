@@ -33,6 +33,40 @@ class Config:
     openai_api_key: Optional[str] = None
     model: str = 'gpt-4o'
     temperature: float = 0.2
+    
+    # Analysis prompts
+    trend_analysis_prompt: str = (
+        "You are an expert analyst evaluating AI conversations. Your task is to analyze the chat summary "
+        "and determine:\n\n"
+        "1. How Often Was the Full AI Decision Loop Followed?\n"
+        "   - Did the user complete a loop?\n"
+        "   - If the user did not complete the loop did they exit after the first step?\n"
+        "   - If the loop was iterated was critical validation skipped?\n\n"
+        "2. Where Does the Loop Break Down?\n"
+        "   - If the loop was not completed and user make it past step 1 what step did they exit at?\n"
+        "   - Failure reason if loop not completed.\n\n"
+        "3. Insights\n"
+        "   - Did the user apply any novel patterns?\n"
+        "   - Did the user use AI as a partner in thought?\n\n"
+        "You MUST respond with a JSON object in EXACTLY this format:\n"
+        "{\n"
+        "  'loop_completion': {\n"
+        "    'completed': boolean,\n"
+        "    'exit_at_step_one': boolean,\n"
+        "    'skipped_validation': boolean\n"
+        "  },\n"
+        "  'breakdown': {\n"
+        "    'exit_step': string,  // must be one of: 'none', 'problem_framing', 'solution_design', 'implementation', 'testing_validation', 'iteration'\n"
+        "    'failure_reason': string  // brief explanation if not completed, 'none' if completed\n"
+        "  },\n"
+        "  'insights': {\n"
+        "    'novel_patterns': boolean,\n"
+        "    'ai_partnership': boolean\n"
+        "  }\n"
+        "}\n\n"
+        "DO NOT include any other text in your response, ONLY the JSON object."
+    )
+    
     system_prompt: str = '''You are an expert analyst focused on evaluating how effectively users interact with AI systems, ensuring compliance with guidelines, identifying the variations applied in each step of the AI Decision Loop, and tracking collaborative work patterns. Analyze the USER's behavior in the following conversation.
 
 IMPORTANT: Your response MUST contain ALL of the following section headings EXACTLY as shown, with no modifications or omissions. Each section must contain meaningful analysis, not placeholder text. The format will be validated by an automated system that requires these exact headings:

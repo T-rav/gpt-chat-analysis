@@ -21,13 +21,13 @@ class TrendProcessor:
             output_dir (str): Directory to save analysis JSON files (default: 'analysis')
             force_reprocess (bool): If True, reprocess all files even if cached results exist
         """
-        config = Config()
-        if not config.openai_api_key:
+        self.config = Config()
+        if not self.config.openai_api_key:
             raise ValueError("OpenAI API key not found in environment variables")
             
-        self.client = OpenAI(api_key=config.openai_api_key)
-        self.model = config.model
-        self.temperature = config.temperature
+        self.client = OpenAI(api_key=self.config.openai_api_key)
+        self.model = self.config.model
+        self.temperature = self.config.temperature
         self.output_dir = output_dir
         self.force_reprocess = force_reprocess
         
@@ -171,37 +171,7 @@ class TrendProcessor:
         Returns:
             dict: Detailed analysis of the AI Decision Loop execution
         """
-        system_prompt = (
-            "You are an expert analyst evaluating AI conversations. Your task is to analyze the chat summary "
-            "and determine:\n\n"
-            "1. How Often Was the Full AI Decision Loop Followed?\n"
-            "   - Did the user complete a loop?\n"
-            "   - If the user did not complete the loop did they exit after the first step?\n"
-            "   - If the loop was iterated was critical validation skipped?\n\n"
-            "2. Where Does the Loop Break Down?\n"
-            "   - If the loop was not completed and user make it past step 1 what step did they exit at?\n"
-            "   - Failure reason if loop not completed.\n\n"
-            "3. Insights\n"
-            "   - Did the user apply any novel patterns?\n"
-            "   - Did the user use AI as a partner in thought?\n\n"
-            "You MUST respond with a JSON object in EXACTLY this format:\n"
-            "{\n"
-            "  'loop_completion': {\n"
-            "    'completed': boolean,\n"
-            "    'exit_at_step_one': boolean,\n"
-            "    'skipped_validation': boolean\n"
-            "  },\n"
-            "  'breakdown': {\n"
-            "    'exit_step': string,  // must be one of: 'none', 'problem_framing', 'solution_design', 'implementation', 'testing_validation', 'iteration'\n"
-            "    'failure_reason': string  // brief explanation if not completed, 'none' if completed\n"
-            "  },\n"
-            "  'insights': {\n"
-            "    'novel_patterns': boolean,\n"
-            "    'ai_partnership': boolean\n"
-            "  }\n"
-            "}\n\n"
-            "DO NOT include any other text in your response, ONLY the JSON object."
-        )
+        system_prompt = self.config.trend_analysis_prompt
         
         user_prompt = f"Analyze this conversation and return ONLY a JSON object according to the specified format:\n\n{text}"
         
