@@ -65,9 +65,6 @@ python app.py --trends analysis/
 
 # Export a chat for debugging - supports both txt and json
 python app.py --export-chat <conversation_id> --export-format txt
-
-# Generate heatmap visualizations (The OG functionality when cloned)
-python app.py --heatmap
 ```
 ---
 
