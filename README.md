@@ -19,6 +19,10 @@ A research toolbox for analyzing your ChatGPT conversations using the AI Decisio
 
 ## Installation
 
+**Requirements:**
+- Python 3.8 or higher
+- pip (Python package installer)
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/T-rav/gpt-chat-analysis.git
@@ -49,7 +53,9 @@ Customize settings in `configuration.py`:
 - `DEFAULT_MODEL`: GPT model (default: `gpt-4o`).
 - `MAX_WORKERS`: Number of parallel analysis threads.
 
-### 🚀 The Data Pipeline
+### 🚀 Running the Analysis Pipeline
+
+Follow these steps in order:
 ```bash
 # Run chat analysis saving to the analysis/ folder
 python app.py -o analysis
@@ -58,10 +64,6 @@ python app.py -o analysis
 # Note: Removes invalid ones - re-run analysis and it will just reprocess the bad ones
 python app.py --verify-format analysis/
 
-# Generate PDFs with custom size limit
-# Pdfs are only needed if doing Vibe Analysis
-python app.py --pdf 10 --pdf-size-limit 5
-
 # Generate trend analysis across all chat analysis documents
 # This will make a bunch of json files
 python app.py --trends analysis/
@@ -69,6 +71,10 @@ python app.py --trends analysis/
 # Export a chat for debugging - supports both txt and json
 # Only needed if checking results / debugging issues
 python app.py --export-chat <conversation_id> --export-format txt
+
+# Generate PDFs with custom size limit
+# Pdfs are only needed if doing `Vibe Analysis` before running trends analysis
+python app.py --pdf 10 --pdf-size-limit 5
 ```
 ---
 
