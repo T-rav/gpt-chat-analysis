@@ -84,12 +84,6 @@ python app.py --heatmap
 - Tracks AI's role as a collaborative partner.
 - Generates detailed markdown reports.
 
-### 🔥 Heatmap Generation
-- Visualizes:
-  - Conversation frequency by day.
-  - Usage patterns over time.
-  - Interaction hotspots.
-
 ### ✅ Format Verification
 - Ensures markdown files meet format requirements:
   - Brief Summary

@@ -1,4 +1,4 @@
-"""Configuration module for the AI heatmap analysis."""
+"""Configuration module for the AI conversation analysis."""
 
 import os
 from dataclasses import dataclass
