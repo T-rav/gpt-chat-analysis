@@ -1,6 +1,6 @@
 # GPT Conversation Analysis
 
-A research toolbox for analyzing your ChatGPT conversations using the AI Decision Loop framework. Generate quick reports, heatmaps, and insights to study and optimize your AI interactions.
+A research toolbox for analyzing your ChatGPT conversations using the AI Decision Loop framework. Generate quick reports and insights to study and optimize your AI interactions.
 
 ---
 
