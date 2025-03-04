@@ -339,13 +339,10 @@ class TrendProcessor:
         
         # Count exit steps for engaged chats only
         exit_steps = {}
-        failure_reasons = {}
         for s in engaged_chats:
             if s.get('completed', 0) != 1:
                 exit_step = s.get('exit_step', 'unknown')
-                failure_reason = normalize_reason(s.get('failure_reason', 'unknown'))
                 exit_steps[exit_step] = exit_steps.get(exit_step, 0) + 1
-                failure_reasons[failure_reason] = failure_reasons.get(failure_reason, 0) + 1
         
         return {
             "Total Chats": {
@@ -359,8 +356,7 @@ class TrendProcessor:
                 "Skipped Validation (%)": (skipped_validation / total_engaged) * 100
             },
             "Breakdown (of engaged)": {
-                "Exit Steps": exit_steps,
-                "Failure Reasons": failure_reasons
+                "Exit Steps": exit_steps
             },
             "Insights (of engaged)": {
                 "Novel Patterns (%)": (novel_patterns / total_engaged) * 100,
