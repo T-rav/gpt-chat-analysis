@@ -186,19 +186,35 @@ def test_run_analyze_chats(chat_analysis, mock_args):
         chat_analysis.run()
         mock_analyze.assert_called_once()
 
-def test_run_error_handling(chat_analysis):
-    """Test error handling in run method."""
+def test_run_error_handling_value_error(chat_analysis, capsys):
+    """Test error handling for ValueError in run method."""
     with patch.object(chat_analysis, 'analyze_chats', side_effect=ValueError("Test error")):
         with pytest.raises(SystemExit) as exc_info:
             chat_analysis.run()
         assert exc_info.value.code == 1
+        
+        # Check error message
+        captured = capsys.readouterr()
+        assert "Configuration Error: Test error" in captured.out
 
+def test_run_error_handling_file_not_found(chat_analysis, capsys):
+    """Test error handling for FileNotFoundError in run method."""
     with patch.object(chat_analysis, 'analyze_chats', side_effect=FileNotFoundError("Test error")):
         with pytest.raises(SystemExit) as exc_info:
             chat_analysis.run()
         assert exc_info.value.code == 1
+        
+        # Check error message
+        captured = capsys.readouterr()
+        assert "File Error: Test error" in captured.out
 
+def test_run_error_handling_generic_exception(chat_analysis, capsys):
+    """Test error handling for generic Exception in run method."""
     with patch.object(chat_analysis, 'analyze_chats', side_effect=Exception("Test error")):
         with pytest.raises(SystemExit) as exc_info:
             chat_analysis.run()
         assert exc_info.value.code == 1
+        
+        # Check error message
+        captured = capsys.readouterr()
+        assert "Unexpected Error: Test error" in captured.out
