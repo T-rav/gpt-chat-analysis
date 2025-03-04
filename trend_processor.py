@@ -199,6 +199,8 @@ class TrendProcessor:
                 # If it had a json tag at the start, remove that too
                 if result.startswith('json\n'):
                     result = result[5:].strip()
+                    
+            print(f"\nAPI Response for {filename}:\n{result[:100]}...")
             
             # Handle simple yes/no responses
             if result.lower() in ['yes', 'no']:
@@ -222,7 +224,22 @@ class TrendProcessor:
                 }
             else:
                 # Try to parse as JSON
-                analysis = json.loads(result)
+                try:
+                    # First try direct parsing
+                    analysis = json.loads(result)
+                except json.JSONDecodeError as je:
+                    # If that fails, try to fix common issues with single quotes
+                    try:
+                        print(f"\nAttempting to fix JSON with single quotes in {filename}")
+                        # Replace single quotes with double quotes, but be careful with nested quotes
+                        import re
+                        # This is a simplified approach - might not work for all cases
+                        fixed_result = result.replace("'", "\"")
+                        analysis = json.loads(fixed_result)
+                        print("Successfully fixed and parsed JSON with single quotes")
+                    except Exception as fix_error:
+                        print(f"\nJSON parsing error in {filename}. Response was:\n{result[:200]}...")
+                        raise je
             
             # Save the analysis
             json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
@@ -230,14 +247,25 @@ class TrendProcessor:
                 json.dump(analysis, f, indent=2)
             
             return analysis
-        except Exception as e:
+        except json.JSONDecodeError as je:
+            error_msg = f"JSON parsing error for {filename}: {str(je)}"
+            print(f"\n{error_msg}")
             default_analysis = {
                 'loop_completion': {'completed': False, 'exit_at_step_one': True, 'skipped_validation': False},
-                'breakdown': {'exit_step': 'unknown', 'failure_reason': 'Failed to parse analysis'},
+                'breakdown': {'exit_step': 'unknown', 'failure_reason': f'JSON parsing error: {str(je)}'},
+                'insights': {'novel_patterns': False, 'ai_partnership': False, 'ai_as_critic': False, 'decision_intelligence': False}
+            }
+        except Exception as e:
+            error_msg = f"Error analyzing {filename}: {type(e).__name__}: {str(e)}"
+            print(f"\n{error_msg}")
+            default_analysis = {
+                'loop_completion': {'completed': False, 'exit_at_step_one': True, 'skipped_validation': False},
+                'breakdown': {'exit_step': 'unknown', 'failure_reason': f'Analysis error: {type(e).__name__}: {str(e)}'},
                 'insights': {'novel_patterns': False, 'ai_partnership': False, 'ai_as_critic': False, 'decision_intelligence': False}
             }
             
-            # Save the default analysis for failed cases
+        # For any exception, save the default analysis
+        if 'default_analysis' in locals():
             json_filename = os.path.join(self.output_dir, f"{os.path.splitext(filename)[0]}.json")
             with open(json_filename, 'w') as f:
                 json.dump(default_analysis, f, indent=2)
