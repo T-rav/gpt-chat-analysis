@@ -7,13 +7,11 @@ A research toolbox for analyzing your ChatGPT conversations using the AI Decisio
 ## AI Decision Loop
 
 🚀 **The 5 Steps (with Adaptive Loops)**
-1. **Frame the Decision Context & Guide AI Prompting**
-2. **Generate Multi-Perspective AI Outputs & Validate Responses**
-3. **Apply Human Judgment & Adjust AI Interaction**
-4. **Test for Bias & Feasibility**
-5. **Refine, Iterate, and Automate Where Possible**
-
-🔁 **Adaptive Loops:** At any step, return to previous steps to refine prompts, reassess assumptions, or mitigate biases.
+1. **Frame the Decision Context** – Define constraints, assumptions, and the problem.
+2. **AI Output Generation & Thought Partnership** – Treat AI as a collaborator, not a magic box.
+3. **Apply Human Judgment** – Challenge AI's responses, ask for justification.
+4. **Verify & Validate** – Fact-check for reliability, especially in high-stakes tasks.
+5. **Refine & Iterate** – Learn from interactions, improve prompts, and automate selectively.
 
 ---
 
