@@ -39,7 +39,7 @@ A research toolbox for analyzing your ChatGPT conversations using the AI Decisio
      ```
 
 4. Prepare your data:
-   - Place exported ChatGPT conversations in the `chats/` directory under the git clone directory.
+   - Place exported ChatGPT conversations in the  root of the project and rename it to `chats`.
 
 ---
 
